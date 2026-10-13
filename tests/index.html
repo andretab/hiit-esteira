@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Testes HIIT</title>
+  <style>
+    body { font: 15px/1.5 system-ui, sans-serif; max-width: 720px; margin: 24px auto; padding: 0 16px; background: #f6efe4; color: #2a211b; }
+    li { list-style: none; padding: 4px 0; }
+    .ok::before { content: '✔ '; color: #177e78; }
+    .falha::before { content: '✘ '; color: #c2451f; }
+    .erro { color: #c2451f; font-size: 13px; margin-left: 20px; }
+    #resumo { font-weight: 700; font-size: 18px; }
+  </style>
+</head>
+<body>
+  <h1>Testes — gerarTreino e conversões</h1>
+  <p id="resumo">Rodando…</p>
+  <ul id="lista"></ul>
+  <script type="module">
+    import { executarTestes } from './testes.js';
+    const resultados = executarTestes();
+    const lista = document.getElementById('lista');
+    for (const r of resultados) {
+      const li = document.createElement('li');
+      li.className = r.ok ? 'ok' : 'falha';
+      li.textContent = r.nome;
+      if (!r.ok) {
+        const e = document.createElement('div');
+        e.className = 'erro';
+        e.textContent = r.erro;
+        li.append(e);
+      }
+      lista.append(li);
+    }
+    const falhas = resultados.filter((r) => !r.ok).length;
+    document.getElementById('resumo').textContent =
+      `${resultados.length - falhas}/${resultados.length} passaram` + (falhas ? ` — ${falhas} falha(s)` : ' ✔');
+    window.__resultados = resultados;
+  </script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "name": "hiit-esteira",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PWA de treino HIIT para esteira (vanilla JS, offline-first)",
+  "type": "module",
+  "scripts": {
+    "test": "node tests/run-node.js",
+    "start": "npx --yes serve -l 8080 ."
+  }
+}
