@@ -1,0 +1,4 @@
+<drawables>
+    <!-- O compilador redimensiona o ícone para o tamanho de cada device (pode emitir aviso). -->
+    <bitmap id="LauncherIcon" filename="launcher_icon.png" />
+</drawables>

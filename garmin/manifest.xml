@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<!--
+    Manifest do app Connect IQ "HIIT Esteira".
+    - type="watch-app": device app (não data field), pois precisamos de tela própria,
+      Timer, vibração e tom a cada troca de bloco.
+    - minApiLevel 3.2.0: cobre Attention.playTone/vibrate, Application.Storage e
+      todos os Forerunner/Fenix/Epix/Venu dos últimos anos.
+    - Sem permissões: Storage e Attention não exigem. (Quando gravarmos FIT no futuro,
+      entra <iq:uses-permission id="Fit"/>.)
+-->
+<iq:manifest version="3" xmlns:iq="http://www.garmin.com/xml/connectiq">
+    <iq:application id="f1998ea00ebd4a06983b7a3ccefc974f"
+                    type="watch-app"
+                    name="@Strings.AppName"
+                    entry="HiitEsteiraApp"
+                    launcherIcon="@Drawables.LauncherIcon"
+                    minApiLevel="3.2.0">
+        <iq:products>
+            <!-- Forerunner -->
+            <iq:product id="fr165"/>
+            <iq:product id="fr255"/>
+            <iq:product id="fr265"/>
+            <iq:product id="fr955"/>
+            <iq:product id="fr965"/>
+            <!-- Fenix / Epix -->
+            <iq:product id="fenix7"/>
+            <iq:product id="fenix7pro"/>
+            <iq:product id="epix2"/>
+            <!-- Venu -->
+            <iq:product id="venu3"/>
+        </iq:products>
+        <iq:permissions/>
+        <iq:languages>
+            <iq:language>por</iq:language>
+        </iq:languages>
+        <iq:barrels/>
+    </iq:application>
+</iq:manifest>

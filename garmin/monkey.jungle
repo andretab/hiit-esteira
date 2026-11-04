@@ -1,0 +1,3 @@
+# Arquivo de build do Connect IQ.
+# Por convenção o compilador já usa source/ e resources/; só apontamos o manifest.
+project.manifest = manifest.xml
