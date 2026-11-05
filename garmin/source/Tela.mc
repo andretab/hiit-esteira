@@ -23,6 +23,14 @@ module Tela {
         return "DESAQUEC.";
     }
 
+    // Nome por extenso, para menus.
+    function nomeTipo(tipo as TipoBloco) as String {
+        if (tipo == TIPO_ESFORCO) { return "Esforço"; }
+        if (tipo == TIPO_RECUPERACAO) { return "Recuperação"; }
+        if (tipo == TIPO_AQUECIMENTO) { return "Aquecimento"; }
+        return "Desaquecimento";
+    }
+
     function abrevTipo(tipo as TipoBloco) as String {
         if (tipo == TIPO_ESFORCO) { return "Esforço"; }
         if (tipo == TIPO_RECUPERACAO) { return "Recup."; }

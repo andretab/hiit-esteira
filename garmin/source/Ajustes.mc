@@ -19,6 +19,7 @@ module Ajustes {
         // Menu principal: histórico no topo, ajustes abaixo.
         var menu = new WatchUi.Menu2({ :title => "HIIT Esteira" });
         menu.addItem(new WatchUi.MenuItem("Histórico", "", :historico, null));
+        menu.addItem(new WatchUi.MenuItem("Treinos personalizados", "", :personalizados, null));
         menu.addItem(new WatchUi.MenuItem("Ritmo máximo", "", :ritmo, null));
         menu.addItem(new WatchUi.MenuItem("Duração", "", :duracao, null));
         menu.addItem(new WatchUi.MenuItem("Unidade", "", :unidade, null));
@@ -41,6 +42,8 @@ class AjustesDelegate extends WatchUi.Menu2InputDelegate {
         var unidade = Config.unidade();
         var qtd = Historico.quantidade();
         rotular(:historico, qtd == 0 ? "Vazio" : qtd.toString() + (qtd == 1 ? " treino" : " treinos"));
+        var ativo = Personalizados.ler(Personalizados.ativo());
+        rotular(:personalizados, ativo != null ? "Em uso: " + ativo.nome : "Em uso: automático");
         rotular(:ritmo, Unidades.formatarRitmo(Config.ritmoMax(), unidade));
         rotular(:duracao, Config.duracaoMin().toString() + " min");
         rotular(:unidade, Unidades.rotulo(unidade));
@@ -60,6 +63,8 @@ class AjustesDelegate extends WatchUi.Menu2InputDelegate {
         var id = item.getId();
         if (id == :historico) {
             HistoricoMenu.abrir();
+        } else if (id == :personalizados) {
+            TelasPersonalizado.abrirLista(method(:atualizarRotulos));
         } else if (id == :ritmo) {
             var view = new AjusteView("Ritmo máximo", AJUSTE_RITMO, Config.ritmoMax(),
                 Config.RITMO_MAX_MIN, Config.RITMO_MAX_MAX, Config.RITMO_PASSO, method(:salvarRitmo));
@@ -94,7 +99,9 @@ class AjustesDelegate extends WatchUi.Menu2InputDelegate {
 // O que a AjusteView está editando (só muda a formatação do valor).
 enum TipoAjuste {
     AJUSTE_RITMO = 0,
-    AJUSTE_DURACAO = 1
+    AJUSTE_DURACAO = 1,
+    AJUSTE_TEMPO = 2,   // segundos, exibido como m:ss; passo 5 s até 1 min, 15 s acima
+    AJUSTE_REPS = 3
 }
 
 // Tela genérica de ajuste numérico.
@@ -121,7 +128,13 @@ class AjusteView extends WatchUi.View {
 
     // direcao: +1 ou -1. Arredonda a 0,1 para não acumular erro de ponto flutuante.
     function mudar(direcao as Number) as Void {
-        var v = Unidades.arred1(_valor + direcao * _passo);
+        var passo = _passo;
+        if (_tipo == AJUSTE_TEMPO) {
+            // fino abaixo de 1 min, grosso acima (de 1:00 a 3:00 em 8 toques)
+            var abaixo = direcao > 0 ? _valor < 60.0 : _valor <= 60.0;
+            passo = abaixo ? 5.0 : 15.0;
+        }
+        var v = Unidades.arred1(_valor + direcao * passo);
         if (v < _min) { v = _min; }
         if (v > _max) { v = _max; }
         _valor = v;
@@ -151,6 +164,12 @@ class AjusteView extends WatchUi.View {
             principal = Unidades.valorRitmo(_valor, u, ".");
             unidadeTxt = Unidades.rotulo(u);
             secundario = "= " + Unidades.formatarRitmo(_valor, outra);
+        } else if (_tipo == AJUSTE_TEMPO) {
+            principal = Unidades.formatarTempo(Math.round(_valor).toNumber());
+            unidadeTxt = "min:s";
+        } else if (_tipo == AJUSTE_REPS) {
+            principal = Math.round(_valor).toNumber().toString();
+            unidadeTxt = "vezes";
         } else {
             principal = Math.round(_valor).toNumber().toString();
             unidadeTxt = "min";

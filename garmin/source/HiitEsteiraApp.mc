@@ -16,14 +16,17 @@ class HiitEsteiraApp extends Application.AppBase {
     }
 
     function onStart(state as Dictionary?) as Void {
+        // Traz treinos digitados no Garmin Connect (só se o texto mudou desde a última vez).
+        Personalizados.importarDoCelular();
     }
 
     function onStop(state as Dictionary?) as Void {
     }
 
-    // Chamado quando o usuário salva as configurações no app Garmin Connect
-    // com o app aberto no relógio: basta redesenhar (Config lê sempre das Properties).
+    // Chamado quando o usuário salva as configurações no app Garmin Connect com o app
+    // aberto no relógio: importa treinos em texto e redesenha (Config lê das Properties).
     function onSettingsChanged() as Void {
+        Personalizados.importarDoCelular();
         WatchUi.requestUpdate();
     }
 

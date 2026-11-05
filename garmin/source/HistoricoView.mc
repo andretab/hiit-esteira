@@ -117,6 +117,7 @@ class DetalheTreinoView extends WatchUi.View {
             _r.tiros.toString() + " de " + _r.tirosPlanejados.toString() + " tiros", Tela.CENTRO);
         Tela.textoAjustado(dc, h * 0.78,
             "Pico " + Unidades.formatarRitmo(_r.ritmoPico, Config.unidade()), [Graphics.FONT_XTINY]);
+        Tela.textoAjustado(dc, h * 0.86, _r.nome, [Graphics.FONT_XTINY]);
     }
 }
 

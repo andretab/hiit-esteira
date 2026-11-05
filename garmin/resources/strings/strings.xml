@@ -6,6 +6,8 @@
     <string id="PromptRitmo">Velocidade de pico que você aguenta num tiro curto (8 a 25 km/h)</string>
     <string id="TituloDuracao">Duração do treino (min)</string>
     <string id="PromptDuracao">De 10 a 50 minutos</string>
+    <string id="TituloTexto">Treinos personalizados</string>
+    <string id="PromptTexto">Ex.: Tiros = AQ 5,5 3:00; 8x(E 13 1:00 + R 7 1:30); DQ 6 3:00 | Outro = ... (AQ aquec., E esforço, R recup., DQ desaquec.; ritmo em km/h)</string>
     <string id="TituloUnidade">Unidade de ritmo</string>
     <string id="UnidadeKmh">km/h</string>
     <string id="UnidadePace">min/km</string>

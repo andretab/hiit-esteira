@@ -1,11 +1,17 @@
-// InicioView.mc — tela inicial: mostra o treino que será gerado e permite ajustar a duração.
+// InicioView.mc — tela inicial: mostra o treino que será executado.
+//
+// Dois modos:
+//   - Automático: treino gerado pela duração e pelo ritmo máximo. UP/DOWN muda a duração.
+//   - Personalizado: o treino escolhido em MENU > Treinos personalizados. UP/DOWN não faz
+//     nada (a duração é a soma dos blocos); para voltar ao automático, use o menu.
 //
 // Controles:
-//   UP / DOWN  : duração +1 / -1 min (10 a 50)
-//   MENU       : histórico e ajustes — segurar UP nos Forerunner
+//   UP / DOWN  : duração +1 / -1 min (só no automático)
+//   MENU       : histórico, treinos e ajustes — segurar UP nos Forerunner
 //   START      : inicia o treino
 //   BACK       : sai do app
 
+import Toybox.Attention;
 import Toybox.Graphics;
 import Toybox.Lang;
 import Toybox.WatchUi;
@@ -18,13 +24,28 @@ class InicioView extends WatchUi.View {
 
     function onUpdate(dc as Graphics.Dc) as Void {
         Tela.limpar(dc);
-        var w = dc.getWidth();
         var h = dc.getHeight();
-        var cx = w / 2;
+        var unidade = Config.unidade();
 
+        var pers = Personalizados.ler(Personalizados.ativo());
+        if (pers != null) {
+            desenharPersonalizado(dc, pers, unidade);
+        } else {
+            desenharAutomatico(dc, unidade);
+        }
+
+        var cx = dc.getWidth() / 2;
+        dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(cx, h * 0.82, Graphics.FONT_XTINY, "START p/ iniciar", Tela.CENTRO);
+        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+        Tela.textoAjustado(dc, h * 0.89, "MENU: opções", [Graphics.FONT_XTINY]);
+    }
+
+    private function desenharAutomatico(dc as Graphics.Dc, unidade as Unidades.Unidade) as Void {
+        var h = dc.getHeight();
+        var cx = dc.getWidth() / 2;
         var ritmo = Config.ritmoMax();
         var duracao = Config.duracaoMin();
-        var unidade = Config.unidade();
         // Gerar é barato (dezenas de blocos), então geramos a prévia a cada redesenho.
         var previa = Gerador.gerar(ritmo, duracao);
 
@@ -41,11 +62,34 @@ class InicioView extends WatchUi.View {
         dc.drawText(cx, h * 0.72, Graphics.FONT_XTINY,
             previa.contarEsforcos().toString() + " tiros a " + Unidades.formatarRitmo(previa.ritmoPico(), unidade),
             Tela.CENTRO);
+    }
 
-        dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, h * 0.82, Graphics.FONT_XTINY, "START p/ iniciar", Tela.CENTRO);
+    private function desenharPersonalizado(dc as Graphics.Dc, pers as TreinoPersonalizado,
+                                           unidade as Unidades.Unidade) as Void {
+        var h = dc.getHeight();
+        var cx = dc.getWidth() / 2;
+        var treino = pers.expandir();
+
+        dc.setColor(Graphics.COLOR_ORANGE, Graphics.COLOR_TRANSPARENT);
+        Tela.textoAjustado(dc, h * 0.17, pers.nome, [Graphics.FONT_SMALL, Graphics.FONT_TINY, Graphics.FONT_XTINY]);
+
+        if (treino.intervalos.size() == 0) {
+            dc.setColor(Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(cx, h * 0.45, Graphics.FONT_SMALL, "Treino vazio", Tela.CENTRO);
+            dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(cx, h * 0.60, Graphics.FONT_XTINY, "Adicione blocos no menu", Tela.CENTRO);
+            return;
+        }
+
+        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(cx, h * 0.38, Graphics.FONT_NUMBER_MEDIUM, Unidades.formatarTempo(treino.duracaoTotal()), Tela.CENTRO);
         dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-        Tela.textoAjustado(dc, h * 0.89, "MENU: histórico/ajustes", [Graphics.FONT_XTINY]);
+        dc.drawText(cx, h * 0.53, Graphics.FONT_TINY, "personalizado", Tela.CENTRO);
+        dc.drawText(cx, h * 0.64, Graphics.FONT_XTINY,
+            treino.intervalos.size().toString() + " blocos", Tela.CENTRO);
+        Tela.textoAjustado(dc, h * 0.72,
+            treino.contarEsforcos().toString() + " tiros, pico " + Unidades.formatarRitmo(treino.ritmoPico(), unidade),
+            [Graphics.FONT_XTINY]);
     }
 }
 
@@ -56,7 +100,12 @@ class InicioDelegate extends WatchUi.BehaviorDelegate {
     }
 
     function onSelect() as Boolean {
-        var treino = Gerador.gerar(Config.ritmoMax(), Config.duracaoMin());
+        var treino = Personalizados.treinoParaIniciar();
+        if (treino == null) {
+            // personalizado vazio: avisa com uma vibração curta em vez de iniciar
+            Alertas.vibrar([new Attention.VibeProfile(50, 200)]);
+            return true;
+        }
         var view = new TreinoView(treino);
         WatchUi.pushView(view, new TreinoDelegate(view), WatchUi.SLIDE_LEFT);
         return true;
@@ -64,15 +113,19 @@ class InicioDelegate extends WatchUi.BehaviorDelegate {
 
     // UP
     function onPreviousPage() as Boolean {
-        Config.setDuracaoMin(Config.duracaoMin() + Config.DURACAO_PASSO);
-        WatchUi.requestUpdate();
-        return true;
+        return mudarDuracao(Config.DURACAO_PASSO);
     }
 
     // DOWN
     function onNextPage() as Boolean {
-        Config.setDuracaoMin(Config.duracaoMin() - Config.DURACAO_PASSO);
-        WatchUi.requestUpdate();
+        return mudarDuracao(-Config.DURACAO_PASSO);
+    }
+
+    private function mudarDuracao(delta as Number) as Boolean {
+        if (Personalizados.ativo() < 0) {
+            Config.setDuracaoMin(Config.duracaoMin() + delta);
+            WatchUi.requestUpdate();
+        }
         return true;
     }
 

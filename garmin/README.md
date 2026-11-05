@@ -21,6 +21,10 @@ garmin/
     ├── Ajustes.mc        # menu principal + tela de ajuste numérico
     ├── Historico.mc      # RegistroTreino + gravação/leitura no Application.Storage
     ├── HistoricoView.mc  # lista, detalhe e "apagar tudo"
+    ├── Personalizado.mc  # ItemPlano, TreinoPersonalizado (plano -> intervalos) + Storage
+    ├── TextoTreino.mc    # parser do texto digitado no Garmin Connect
+    ├── PersonalizadoView.mc # menus de edição (lista, treino, blocos, item)
+    ├── Testes.mc         # testes unitários (só entram no build --unit-test)
     ├── Gerador.mc        # gera aquecimento + esforço/recuperação + desaquecimento
     ├── MotorTreino.mc    # máquina de estados do treino (sem UI)
     ├── Alertas.mc        # vibração, tom e luz
@@ -51,12 +55,39 @@ Views/Delegates  ──►  MotorTreino  ──►  Treino/Intervalo
 
 | Tela       | START             | UP / DOWN                        | MENU (segurar UP) | BACK               |
 |------------|-------------------|----------------------------------|-------------------|--------------------|
-| Início     | inicia o treino   | duração ±1 min                   | menu principal    | sai do app         |
+| Início     | inicia o treino   | duração ±1 min (só automático)   | menu principal    | sai do app         |
 | Menu       | abre o item       | navega                           | —                 | volta              |
-| Ajuste     | salva             | ritmo ±0,5 km/h · duração ±1 min | —                 | cancela            |
+| Ajuste     | salva             | ritmo ±0,5 km/h · duração ±1 min · tempo ±5 s (até 1 min) / ±15 s · repetições ±1 | — | cancela |
 | Histórico  | abre o detalhe    | navega                           | —                 | volta              |
 | Treino     | pausa / retoma    | km/h ↔ min/km                    | —                 | confirma e encerra |
 | Resumo     | volta ao início   | —                                | —                 | volta ao início    |
+
+### Treinos personalizados
+
+Até 10 treinos com nome. Cada um é uma lista de até 20 itens; um item é um **bloco**
+(tipo, ritmo, tempo) ou uma **série** (N × esforço + recuperação, sem recuperação depois do
+último tiro). Ao iniciar, o plano vira a mesma lista de intervalos do modo automático, então
+tela, alertas e histórico são os mesmos.
+
+**No relógio:** MENU → Treinos personalizados. "+ Novo treino" já vem com um exemplo
+(aquecimento, 8 tiros, desaquecimento) para editar. Em cada treino: Usar este treino, Editar
+blocos (+ Bloco, + Série, mover, duplicar, apagar), Duplicar, Apagar. "Usar automático" volta
+ao treino gerado pela duração.
+
+**No celular:** Garmin Connect → Configurações do app → *Treinos personalizados*:
+
+```
+Tiros = AQ 5,5 3:00; 8x(E 13 1:00 + R 7 1:30); DQ 6 3:00 | Pirâmide = AQ 6 5; E 12 1:00; R 7 1; E 13 2:00; R 7 1; E 14 1:00; DQ 6 3
+```
+
+- `|` separa treinos · `Nome =` (opcional) · `;` separa itens
+- Bloco: `TIPO RITMO TEMPO` — AQ aquecimento, E esforço, R recuperação, DQ desaquecimento
+- Série: `8x(E 13 1:00 + R 7 1:30)` (as letras E/R dentro da série são opcionais)
+- Ritmo em km/h (`13`, `13,5` ou `13.5`) · Tempo: `1:30`, `90s`, `3` ou `3min`, `1,5` (min)
+
+O texto é importado ao abrir o app e quando você salva as configurações, **só se mudou**
+(edições feitas no relógio não são sobrescritas). Um treino com o mesmo nome é substituído.
+Se houver erro, nada é importado e o menu mostra "Erro no texto" com o treino e o item.
 
 ### Histórico
 
@@ -104,6 +135,13 @@ $sdk = Get-Content "$env:APPDATA\Garmin\ConnectIQ\current-sdk.cfg"
 & "$sdk\bin\monkeyc.bat" -d fr965 -f monkey.jungle -o bin\HiitEsteira.prg -y "$env:USERPROFILE\garmin\developer_key.der"
 Start-Process "$sdk\bin\simulator.exe"; Start-Sleep 8
 & "$sdk\bin\monkeydo.bat" bin\HiitEsteira.prg fr965
+```
+
+Testes unitários (parser do texto, expansão das séries, Storage), com o simulador aberto:
+
+```powershell
+& "$sdk\bin\monkeyc.bat" -d fr965 -f monkey.jungle -o bin\testes.prg -y "$env:USERPROFILE\garmin\developer_key.der" --unit-test
+& "$sdk\bin\monkeydo.bat" bin\testes.prg fr965 /t
 ```
 
 ### 1. Instalar o SDK (uma vez, em outra máquina)
@@ -159,6 +197,6 @@ monkeydo bin\HiitEsteira.prg fr965
 - [x] v1a: estrutura, gerador, motor do treino, alertas, telas de início/treino/resumo
 - [x] Settings: ritmo máximo, duração e unidade (no relógio e no app Garmin Connect)
 - [x] Histórico de treinos (Application.Storage) + tela de listagem
-- [ ] Modo personalizado: sequência manual de blocos (ritmo + tempo)
+- [x] Modo personalizado: sequência manual de blocos (ritmo + tempo), no relógio e no celular
 - [ ] Contagem regressiva (3-2-1) antes de cada troca
 - [ ] Futuro: ler velocidade real de footpod; gravar a sessão como atividade FIT
