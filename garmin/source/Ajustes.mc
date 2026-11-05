@@ -23,6 +23,7 @@ module Ajustes {
         menu.addItem(new WatchUi.MenuItem("Ritmo máximo", "", :ritmo, null));
         menu.addItem(new WatchUi.MenuItem("Duração", "", :duracao, null));
         menu.addItem(new WatchUi.MenuItem("Unidade", "", :unidade, null));
+        menu.addItem(new WatchUi.MenuItem("Contagem 3-2-1", "", :contagem, null));
         var delegate = new AjustesDelegate(menu);
         delegate.atualizarRotulos();
         WatchUi.pushView(menu, delegate, WatchUi.SLIDE_UP);
@@ -47,6 +48,7 @@ class AjustesDelegate extends WatchUi.Menu2InputDelegate {
         rotular(:ritmo, Unidades.formatarRitmo(Config.ritmoMax(), unidade));
         rotular(:duracao, Config.duracaoMin().toString() + " min");
         rotular(:unidade, Unidades.rotulo(unidade));
+        rotular(:contagem, Config.contagem() ? "Ligada" : "Desligada");
     }
 
     private function rotular(id as Symbol, texto as String) as Void {
@@ -76,6 +78,10 @@ class AjustesDelegate extends WatchUi.Menu2InputDelegate {
             WatchUi.pushView(view, new AjusteDelegate(view), WatchUi.SLIDE_LEFT);
         } else if (id == :unidade) {
             Config.alternarUnidade();
+            atualizarRotulos();
+            WatchUi.requestUpdate();
+        } else if (id == :contagem) {
+            Config.alternarContagem();
             atualizarRotulos();
             WatchUi.requestUpdate();
         }

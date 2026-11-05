@@ -8,12 +8,29 @@
 //     recuperação -> 1 pulso longo + tom grave (ALERT_LO)
 //     outros      -> 1 pulso médio + tom de intervalo
 //     fim         -> 3 pulsos + tom de sucesso
+//     contagem    -> nos 3 s finais de cada bloco: bipe curto + vibração leve (o "1" mais agudo)
 // - Os tons respeitam a configuração "Tons de alerta" do próprio relógio.
 
 import Toybox.Attention;
 import Toybox.Lang;
 
 module Alertas {
+
+    const CONTAGEM_SEG = 3;   // bipes em 3, 2 e 1 antes de cada troca
+
+    // Lógica pura da contagem (testável): dado o tempo restante do bloco (arredondado
+    // para cima) e o último número já anunciado neste bloco, devolve o número a anunciar
+    // agora, ou 0 se nada. Nunca repete (ex.: pausa/retomada no meio) e, se um tick
+    // atrasar e pular um segundo, anuncia o atual em vez do perdido.
+    function numeroContagem(restanteSeg as Number, ultimoAnunciado as Number) as Number {
+        if (restanteSeg < 1 || restanteSeg > CONTAGEM_SEG) {
+            return 0;
+        }
+        if (ultimoAnunciado != 0 && restanteSeg >= ultimoAnunciado) {
+            return 0;
+        }
+        return restanteSeg;
+    }
 
     function trocaDeBloco(tipo as TipoBloco) as Void {
         if (tipo == TIPO_ESFORCO) {
@@ -27,6 +44,20 @@ module Alertas {
             tocar(Attention.TONE_INTERVAL_ALERT);
         }
         acenderLuz();
+    }
+
+    // Contagem regressiva antes da troca: bipe curto + vibração leve.
+    // O "1" é mais agudo, para o corpo antecipar a troca que vem no "0".
+    function contagem(n as Number) as Void {
+        vibrar([new Attention.VibeProfile(60, 120)]);
+        if (Attention has :ToneProfile) {
+            var freq = n == 1 ? 1320 : 880;
+            if (Attention has :playTone) {
+                Attention.playTone({ :toneProfile => [new Attention.ToneProfile(freq, 120)] });
+            }
+        } else {
+            tocar(Attention.TONE_KEY);
+        }
     }
 
     function fim() as Void {

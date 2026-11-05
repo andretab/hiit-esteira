@@ -30,6 +30,7 @@ module Config {
     const CHAVE_RITMO = "ritmoMax";
     const CHAVE_DURACAO = "duracaoMin";
     const CHAVE_UNIDADE = "unidade";
+    const CHAVE_CONTAGEM = "contagem";
 
     // Lê um número das Properties, com valor padrão se faltar ou tiver tipo errado.
     function lerNumero(chave as String, padrao as Numeric) as Numeric {
@@ -80,6 +81,24 @@ module Config {
 
     function setDuracaoMin(min as Number) as Void {
         Properties.setValue(CHAVE_DURACAO, limitarDuracao(min));
+    }
+
+    // ---- Contagem 3-2-1 ----
+
+    function contagem() as Boolean {
+        var v = null;
+        try {
+            v = Properties.getValue(CHAVE_CONTAGEM);
+        } catch (e) {
+            // chave inexistente: usa o padrão
+        }
+        return v instanceof Boolean ? v as Boolean : true;   // padrão: ligada
+    }
+
+    function alternarContagem() as Boolean {
+        var nova = !contagem();
+        Properties.setValue(CHAVE_CONTAGEM, nova);
+        return nova;
     }
 
     // ---- Unidade ----

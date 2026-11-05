@@ -6,6 +6,9 @@
     <setting propertyKey="@Properties.duracaoMin" title="@Strings.TituloDuracao" prompt="@Strings.PromptDuracao">
         <settingConfig type="numeric" min="10" max="50" />
     </setting>
+    <setting propertyKey="@Properties.contagem" title="@Strings.TituloContagem">
+        <settingConfig type="boolean" />
+    </setting>
     <setting propertyKey="@Properties.treinosTexto" title="@Strings.TituloTexto" prompt="@Strings.PromptTexto">
         <settingConfig type="alphaNumeric" />
     </setting>

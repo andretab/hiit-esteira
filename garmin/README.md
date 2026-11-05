@@ -62,6 +62,12 @@ Views/Delegates  ──►  MotorTreino  ──►  Treino/Intervalo
 | Treino     | pausa / retoma    | km/h ↔ min/km                    | —                 | confirma e encerra |
 | Resumo     | volta ao início   | —                                | —                 | volta ao início    |
 
+### Contagem 3-2-1
+
+Nos 3 segundos finais de cada bloco: bipe curto + vibração leve em 3, 2 e 1 (o "1" mais
+agudo), e o tempo restante e a linha "Próx:" ficam na cor do PRÓXIMO bloco (vermelho =
+esforço, verde = recuperação). Liga/desliga em MENU → Contagem 3-2-1 ou no Garmin Connect.
+
 ### Treinos personalizados
 
 Até 10 treinos com nome. Cada um é uma lista de até 20 itens; um item é um **bloco**
@@ -198,5 +204,5 @@ monkeydo bin\HiitEsteira.prg fr965
 - [x] Settings: ritmo máximo, duração e unidade (no relógio e no app Garmin Connect)
 - [x] Histórico de treinos (Application.Storage) + tela de listagem
 - [x] Modo personalizado: sequência manual de blocos (ritmo + tempo), no relógio e no celular
-- [ ] Contagem regressiva (3-2-1) antes de cada troca
+- [x] Contagem regressiva (3-2-1) antes de cada troca (liga/desliga no relógio e no celular)
 - [ ] Futuro: ler velocidade real de footpod; gravar a sessão como atividade FIT

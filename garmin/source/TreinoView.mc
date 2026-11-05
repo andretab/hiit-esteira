@@ -33,11 +33,14 @@ class TreinoView extends WatchUi.View {
     private var _ultimoSeg as Number = -1;
     private var _confirmando as Boolean = false;
     private var _finalizada as Boolean = false;
+    private var _contagemLigada as Boolean;
+    private var _ultimaContagem as Number = 0;   // último número da contagem já tocado neste bloco
 
     function initialize(treino as Treino) {
         View.initialize();
         _motor = new MotorTreino(treino);
         _unidade = Config.unidade();
+        _contagemLigada = Config.contagem();   // lido uma vez: evita ler Properties 4x/s
         _timer = new Timer.Timer();
     }
 
@@ -60,7 +63,16 @@ class TreinoView extends WatchUi.View {
         }
         if (evento == EVENTO_TROCA) {
             Alertas.trocaDeBloco(_motor.blocoAtual().tipo);
+            _ultimaContagem = 0;
             _ultimoSeg = -1;  // força redesenho
+        }
+        // Contagem 3-2-1 antes da próxima troca (ou do fim).
+        if (_contagemLigada && _motor.estado() == ESTADO_RODANDO) {
+            var n = Alertas.numeroContagem(_motor.restanteBlocoSeg(), _ultimaContagem);
+            if (n > 0) {
+                _ultimaContagem = n;
+                Alertas.contagem(n);
+            }
         }
         var seg = _motor.decorridoSeg();
         if (seg != _ultimoSeg) {
@@ -162,14 +174,23 @@ class TreinoView extends WatchUi.View {
         dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx, h * 0.475, Graphics.FONT_XTINY, Unidades.rotulo(_unidade), Tela.CENTRO);
 
-        // Tempo restante do bloco.
-        dc.setColor(pausado ? Graphics.COLOR_YELLOW : Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, h * 0.585, Graphics.FONT_NUMBER_MILD,
-            Unidades.formatarTempo(_motor.restanteBlocoSeg()), Tela.CENTRO);
+        // Tempo restante do bloco. Nos últimos segundos (contagem), tempo e "Próx:" ganham
+        // a cor do PRÓXIMO bloco: dá para saber o que vem sem ler o texto.
+        var restante = _motor.restanteBlocoSeg();
+        var prox = _motor.proximoBloco();
+        var emContagem = _contagemLigada && !pausado && restante <= Alertas.CONTAGEM_SEG;
+        var corProx = prox != null ? Tela.corDoTipo((prox as Intervalo).tipo) : Graphics.COLOR_YELLOW;
+        var corTempo = Graphics.COLOR_WHITE;
+        if (pausado) {
+            corTempo = Graphics.COLOR_YELLOW;
+        } else if (emContagem) {
+            corTempo = corProx;
+        }
+        dc.setColor(corTempo, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(cx, h * 0.585, Graphics.FONT_NUMBER_MILD, Unidades.formatarTempo(restante), Tela.CENTRO);
 
         // Próximo bloco.
-        var prox = _motor.proximoBloco();
-        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(emContagem ? corProx : Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
         var textoProx = "Último bloco";
         if (prox != null) {
             var b = prox as Intervalo;

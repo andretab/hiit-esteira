@@ -96,6 +96,26 @@ function testeTextoVazio(logger as Test.Logger) as Boolean {
 }
 
 (:test)
+function testeContagem(logger as Test.Logger) as Boolean {
+    // fora da janela: nada
+    Test.assertEqual(Alertas.numeroContagem(10, 0), 0);
+    Test.assertEqual(Alertas.numeroContagem(4, 0), 0);
+    // sequência normal 3, 2, 1
+    Test.assertEqual(Alertas.numeroContagem(3, 0), 3);
+    Test.assertEqual(Alertas.numeroContagem(3, 3), 0);   // mesmo segundo em outro tick: não repete
+    Test.assertEqual(Alertas.numeroContagem(2, 3), 2);
+    Test.assertEqual(Alertas.numeroContagem(1, 2), 1);
+    Test.assertEqual(Alertas.numeroContagem(1, 1), 0);
+    // tick atrasado pulou o 2: anuncia o 1
+    Test.assertEqual(Alertas.numeroContagem(1, 3), 1);
+    // bloco que já começa dentro da janela (ex.: 2 s restantes ao entrar)
+    Test.assertEqual(Alertas.numeroContagem(2, 0), 2);
+    // fim do bloco (0 restante) é a troca, não contagem
+    Test.assertEqual(Alertas.numeroContagem(0, 1), 0);
+    return true;
+}
+
+(:test)
 function testeIdaEVoltaStorage(logger as Test.Logger) as Boolean {
     var t = new TreinoPersonalizado("rt", [
         ItemPlano.bloco(TIPO_AQUECIMENTO, 5.5, 120),

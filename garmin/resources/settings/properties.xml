@@ -7,6 +7,7 @@
     <property id="ritmoMax" type="float">14.0</property>
     <property id="duracaoMin" type="number">30</property>
     <property id="unidade" type="number">0</property>
+    <property id="contagem" type="boolean">true</property>
     <!-- Treinos personalizados em texto (formato em source/TextoTreino.mc) -->
     <property id="treinosTexto" type="string"></property>
 </properties>
