@@ -5,13 +5,13 @@
 //
 // Layout (frações da altura, pensado para telas redondas 218–454 px):
 //   anel colorido na borda = cor do bloco; arco = progresso DO BLOCO
-//   0.14  tipo do bloco (ex.: "ESFORÇO 3/10") ou "PAUSADO"
+//   0.17  tipo do bloco (ex.: "ESFORÇO 3/10") ou "PAUSADO" — fonte reduz se não couber
 //   0.33  ritmo-alvo (grande)
-//   0.49  unidade
-//   0.62  tempo restante do bloco
-//   0.74  próximo bloco
-//   0.80  barra = progresso TOTAL
-//   0.87  tempo total decorrido / duração
+//   0.475 unidade
+//   0.585 tempo restante do bloco
+//   0.71  próximo bloco
+//   0.78  barra = progresso TOTAL
+//   0.86  tempo total decorrido / duração
 //
 // Controles: START pausa/retoma · UP/DOWN alterna unidade · BACK pede confirmação p/ encerrar.
 
@@ -151,18 +151,19 @@ class TreinoView extends WatchUi.View {
             }
             dc.setColor(cor, Graphics.COLOR_TRANSPARENT);
         }
-        dc.drawText(cx, h * 0.14, Graphics.FONT_SMALL, titulo, Tela.CENTRO);
+        Tela.textoAjustado(dc, h * 0.17, titulo,
+            [Graphics.FONT_SMALL, Graphics.FONT_TINY, Graphics.FONT_XTINY]);
 
         // Ritmo-alvo: o dado mais importante, em fonte numérica grande.
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx, h * 0.33, Graphics.FONT_NUMBER_HOT,
             Unidades.valorRitmo(bloco.kmh, _unidade, "."), Tela.CENTRO);
         dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, h * 0.49, Graphics.FONT_TINY, Unidades.rotulo(_unidade), Tela.CENTRO);
+        dc.drawText(cx, h * 0.475, Graphics.FONT_XTINY, Unidades.rotulo(_unidade), Tela.CENTRO);
 
         // Tempo restante do bloco.
         dc.setColor(pausado ? Graphics.COLOR_YELLOW : Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, h * 0.62, Graphics.FONT_NUMBER_MEDIUM,
+        dc.drawText(cx, h * 0.585, Graphics.FONT_NUMBER_MILD,
             Unidades.formatarTempo(_motor.restanteBlocoSeg()), Tela.CENTRO);
 
         // Próximo bloco.
@@ -173,12 +174,12 @@ class TreinoView extends WatchUi.View {
             var b = prox as Intervalo;
             textoProx = "Próx: " + Tela.abrevTipo(b.tipo) + " " + Unidades.valorRitmo(b.kmh, _unidade, ",");
         }
-        dc.drawText(cx, h * 0.74, Graphics.FONT_XTINY, textoProx, Tela.CENTRO);
+        Tela.textoAjustado(dc, h * 0.71, textoProx, [Graphics.FONT_XTINY]);
 
         // Progresso total.
-        Tela.barra(dc, h * 0.80, (w * 0.55).toNumber(), h / 50 + 2, _motor.progresso(), Graphics.COLOR_ORANGE);
+        Tela.barra(dc, h * 0.78, (w * 0.55).toNumber(), h / 50 + 2, _motor.progresso(), Graphics.COLOR_ORANGE);
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, h * 0.87, Graphics.FONT_XTINY,
+        dc.drawText(cx, h * 0.86, Graphics.FONT_XTINY,
             Unidades.formatarTempo(_motor.decorridoSeg()) + " / " + Unidades.formatarTempo(_motor.totalSeg()),
             Tela.CENTRO);
     }

@@ -2,6 +2,7 @@
 
 import Toybox.Graphics;
 import Toybox.Lang;
+import Toybox.Math;
 import Toybox.System;
 
 module Tela {
@@ -31,6 +32,41 @@ module Tela {
 
     function telaRedonda() as Boolean {
         return System.getDeviceSettings().screenShape == System.SCREEN_SHAPE_ROUND;
+    }
+
+    // Largura útil de uma linha de texto na altura y. Em tela redonda é a corda do
+    // círculo naquela altura (menos a margem); em tela retangular, a largura toda.
+    function larguraNaAltura(dc as Graphics.Dc, y as Numeric, margem as Number) as Number {
+        var w = dc.getWidth();
+        if (!telaRedonda()) {
+            return w - 2 * margem;
+        }
+        var r = w / 2.0;
+        var dy = y.toFloat() - dc.getHeight() / 2.0;
+        var quad = r * r - dy * dy;
+        if (quad <= 0.0) {
+            return 0;
+        }
+        return (2.0 * Math.sqrt(quad)).toNumber() - 2 * margem;
+    }
+
+    // Primeira fonte da lista (da maior para a menor) em que o texto cabe.
+    function fonteQueCabe(dc as Graphics.Dc, texto as String, larguraMax as Number,
+                          fontes as Array<Graphics.FontDefinition>) as Graphics.FontDefinition {
+        for (var i = 0; i < fontes.size(); i++) {
+            if (dc.getTextWidthInPixels(texto, fontes[i]) <= larguraMax) {
+                return fontes[i];
+            }
+        }
+        return fontes[fontes.size() - 1];
+    }
+
+    // Desenha texto centralizado em y, reduzindo a fonte se não couber na tela.
+    function textoAjustado(dc as Graphics.Dc, y as Numeric, texto as String,
+                           fontes as Array<Graphics.FontDefinition>) as Void {
+        var margem = dc.getWidth() / 30 + 4;  // espaço do anel colorido
+        var fonte = fonteQueCabe(dc, texto, larguraNaAltura(dc, y, margem), fontes);
+        dc.drawText(dc.getWidth() / 2, y, fonte, texto, CENTRO);
     }
 
     function limpar(dc as Graphics.Dc) as Void {

@@ -62,7 +62,21 @@ Aquecimento: 1 min caminhando a 5,5 km/h + trote a 58% V. Desaquecimento: trote 
 
 ## Como rodar no simulador (Windows)
 
-### 1. Instalar o SDK (uma vez)
+### Estado atual desta máquina (04/11/2026)
+
+Já instalado: JDK 17 (Temurin), VS Code + extensão Monkey C, Connect IQ SDK 9.3.0 em
+`%APPDATA%\Garmin\ConnectIQ\Sdks\` (baixado direto do servidor da Garmin, sem o SDK Manager),
+chave em `C:\Users\André Freitas\garmin\developer_key.der`. Os 9 devices do manifest compilam.
+Para compilar e abrir no simulador:
+
+```powershell
+$sdk = Get-Content "$env:APPDATA\Garmin\ConnectIQ\current-sdk.cfg"
+& "$sdk\bin\monkeyc.bat" -d fr965 -f monkey.jungle -o bin\HiitEsteira.prg -y "$env:USERPROFILE\garmin\developer_key.der"
+Start-Process "$sdk\bin\simulator.exe"; Start-Sleep 8
+& "$sdk\bin\monkeydo.bat" bin\HiitEsteira.prg fr965
+```
+
+### 1. Instalar o SDK (uma vez, em outra máquina)
 
 1. Instale um **JDK 17** (ex.: Eclipse Temurin). O Java 8 que já está na máquina é antigo
    demais para os SDKs atuais.
