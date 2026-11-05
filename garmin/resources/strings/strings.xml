@@ -4,17 +4,9 @@
     <!-- Configurações no app Garmin Connect -->
     <string id="TituloRitmo">Ritmo máximo (km/h)</string>
     <string id="PromptRitmo">Velocidade de pico que você aguenta num tiro curto (8 a 25 km/h)</string>
-    <string id="TituloDuracao">Duração do treino</string>
+    <string id="TituloDuracao">Duração do treino (min)</string>
+    <string id="PromptDuracao">De 10 a 50 minutos</string>
     <string id="TituloUnidade">Unidade de ritmo</string>
     <string id="UnidadeKmh">km/h</string>
     <string id="UnidadePace">min/km</string>
-    <string id="Min10">10 min</string>
-    <string id="Min15">15 min</string>
-    <string id="Min20">20 min</string>
-    <string id="Min25">25 min</string>
-    <string id="Min30">30 min</string>
-    <string id="Min35">35 min</string>
-    <string id="Min40">40 min</string>
-    <string id="Min45">45 min</string>
-    <string id="Min50">50 min</string>
 </strings>

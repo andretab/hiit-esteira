@@ -103,11 +103,12 @@ class TreinoView extends WatchUi.View {
         _finalizada = true;
         _timer.stop();
         _motor.encerrar();
+        var salvo = Historico.registrar(_motor);
         if (_confirmando) {
             // Treino acabou enquanto a confirmação estava aberta: tira ela antes.
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
         }
-        WatchUi.switchToView(new FimView(_motor), new FimDelegate(), WatchUi.SLIDE_UP);
+        WatchUi.switchToView(new FimView(_motor, salvo), new FimDelegate(), WatchUi.SLIDE_UP);
     }
 
     // ---- Desenho ----

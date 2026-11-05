@@ -16,7 +16,9 @@ import Toybox.WatchUi;
 module Ajustes {
 
     function abrir() as Void {
-        var menu = new WatchUi.Menu2({ :title => "Ajustes" });
+        // Menu principal: histórico no topo, ajustes abaixo.
+        var menu = new WatchUi.Menu2({ :title => "HIIT Esteira" });
+        menu.addItem(new WatchUi.MenuItem("Histórico", "", :historico, null));
         menu.addItem(new WatchUi.MenuItem("Ritmo máximo", "", :ritmo, null));
         menu.addItem(new WatchUi.MenuItem("Duração", "", :duracao, null));
         menu.addItem(new WatchUi.MenuItem("Unidade", "", :unidade, null));
@@ -37,6 +39,8 @@ class AjustesDelegate extends WatchUi.Menu2InputDelegate {
     // Mostra o valor atual de cada item como sublabel.
     function atualizarRotulos() as Void {
         var unidade = Config.unidade();
+        var qtd = Historico.quantidade();
+        rotular(:historico, qtd == 0 ? "Vazio" : qtd.toString() + (qtd == 1 ? " treino" : " treinos"));
         rotular(:ritmo, Unidades.formatarRitmo(Config.ritmoMax(), unidade));
         rotular(:duracao, Config.duracaoMin().toString() + " min");
         rotular(:unidade, Unidades.rotulo(unidade));
@@ -54,7 +58,9 @@ class AjustesDelegate extends WatchUi.Menu2InputDelegate {
 
     function onSelect(item as WatchUi.MenuItem) as Void {
         var id = item.getId();
-        if (id == :ritmo) {
+        if (id == :historico) {
+            HistoricoMenu.abrir();
+        } else if (id == :ritmo) {
             var view = new AjusteView("Ritmo máximo", AJUSTE_RITMO, Config.ritmoMax(),
                 Config.RITMO_MAX_MIN, Config.RITMO_MAX_MAX, Config.RITMO_PASSO, method(:salvarRitmo));
             WatchUi.pushView(view, new AjusteDelegate(view), WatchUi.SLIDE_LEFT);

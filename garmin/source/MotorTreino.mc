@@ -12,6 +12,7 @@
 
 import Toybox.Lang;
 import Toybox.System;
+import Toybox.Time;
 
 enum EstadoTreino {
     ESTADO_PRONTO = 0,
@@ -35,6 +36,7 @@ class MotorTreino {
     private var _indice as Number = 0;
     private var _estado as EstadoTreino = ESTADO_PRONTO;
     private var _concluido as Boolean = false;  // true só se chegou ao fim (não interrompido)
+    private var _inicioEpoch as Number = 0;     // data/hora de início, para o histórico
 
     function initialize(treino as Treino) {
         _treino = treino;
@@ -51,6 +53,7 @@ class MotorTreino {
 
     function iniciar() as Void {
         if (_estado == ESTADO_PRONTO) {
+            _inicioEpoch = Time.now().value();
             _ultimoTimer = System.getTimer();
             _estado = ESTADO_RODANDO;
         }
@@ -110,6 +113,7 @@ class MotorTreino {
 
     function estado() as EstadoTreino { return _estado; }
     function concluido() as Boolean { return _concluido; }
+    function inicioEpoch() as Number { return _inicioEpoch; }
     function treino() as Treino { return _treino; }
     function indice() as Number { return _indice; }
     function totalBlocos() as Number { return _finsMs.size(); }

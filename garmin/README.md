@@ -11,17 +11,20 @@ garmin/
 ├── monkey.jungle         # build (aponta o manifest)
 ├── resources/
 │   ├── strings/strings.xml
+│   ├── settings/         # properties.xml + settings.xml (configurações no celular)
 │   └── drawables/        # ícone do launcher
 └── source/
     ├── HiitEsteiraApp.mc # entrada; abre a InicioView
     ├── Modelo.mc         # TipoBloco, Intervalo, Treino (ritmo sempre em km/h)
     ├── Unidades.mc       # km/h <-> min/km e formatação de tempo (só exibição)
     ├── Config.mc         # preferências em Application.Properties
-    ├── Ajustes.mc        # menu de ajustes + tela de ajuste numérico
+    ├── Ajustes.mc        # menu principal + tela de ajuste numérico
+    ├── Historico.mc      # RegistroTreino + gravação/leitura no Application.Storage
+    ├── HistoricoView.mc  # lista, detalhe e "apagar tudo"
     ├── Gerador.mc        # gera aquecimento + esforço/recuperação + desaquecimento
     ├── MotorTreino.mc    # máquina de estados do treino (sem UI)
     ├── Alertas.mc        # vibração, tom e luz
-    ├── Tela.mc           # cores, nomes e barra de progresso
+    ├── Tela.mc           # cores, nomes, barra e texto que se ajusta à tela redonda
     ├── InicioView.mc     # tela inicial (duração, prévia)
     ├── TreinoView.mc     # tela do treino + delegates (pausa, encerrar)
     └── FimView.mc        # resumo
@@ -31,26 +34,36 @@ garmin/
 
 ```
 Views/Delegates  ──►  MotorTreino  ──►  Treino/Intervalo
-     │                     ▲
-     ▼                     │
-  Alertas              Gerador ◄── Config (Storage)
+     │       │             ▲
+     ▼       ▼             │
+  Alertas  Historico   Gerador ◄── Config
+           (Storage)               (Properties)
 ```
 
 - **Motor sem UI:** a View chama `motor.atualizar()` a cada 250 ms e recebe um evento
   (`TROCA`/`FIM`). O motor mede tempo por diferença de `System.getTimer()`, então não
   acumula atraso de timer, e o bloco atual é deduzido do tempo decorrido.
 - **Ritmo em km/h internamente:** min/km é só formato de tela.
-- **Config isolada:** quando entrarem as settings, só `Config.mc` muda.
+- **Configuração ≠ dado:** preferências em `Properties` (editáveis no celular), histórico em
+  `Storage`. Toda leitura dos dois valida tipo e faixa.
 
 ## Controles
 
-| Tela    | START             | UP / DOWN            | MENU (segurar UP) | BACK                 |
-|---------|-------------------|----------------------|-------------------|----------------------|
-| Início  | inicia o treino   | duração +5 / −5 min  | abre os ajustes   | sai do app           |
-| Ajustes | edita o item      | navega               | —                 | volta                |
-| Ajuste  | salva             | ritmo ±1 km/h · duração ±5 min | —       | cancela              |
-| Treino  | pausa / retoma    | km/h ↔ min/km        | —                 | confirma e encerra   |
-| Resumo  | volta ao início   | —                    | —                 | volta ao início      |
+| Tela       | START             | UP / DOWN                        | MENU (segurar UP) | BACK               |
+|------------|-------------------|----------------------------------|-------------------|--------------------|
+| Início     | inicia o treino   | duração ±1 min                   | menu principal    | sai do app         |
+| Menu       | abre o item       | navega                           | —                 | volta              |
+| Ajuste     | salva             | ritmo ±0,5 km/h · duração ±1 min | —                 | cancela            |
+| Histórico  | abre o detalhe    | navega                           | —                 | volta              |
+| Treino     | pausa / retoma    | km/h ↔ min/km                    | —                 | confirma e encerra |
+| Resumo     | volta ao início   | —                                | —                 | volta ao início    |
+
+### Histórico
+
+Ao terminar (ou encerrar) um treino com pelo menos 1 minuto, ele é gravado no
+`Application.Storage`: data/hora, tempo feito e planejado, tiros feitos/planejados, ritmo de
+pico e se foi concluído. Ficam os últimos 30. MENU → Histórico mostra a lista (mais novo
+primeiro); selecionar abre o detalhe; "Apagar tudo" pede confirmação.
 
 ### Configurações
 
@@ -59,17 +72,20 @@ Ritmo máximo (8–25 km/h), duração (10–50 min) e unidade ficam em `Applica
 
 - **No relógio:** MENU na tela inicial (segurar UP nos Forerunner).
 - **No celular:** app Garmin Connect → seu relógio → Connect IQ → HIIT Esteira → Configurações.
-  Lá o ritmo aceita décimos (ex.: 14,3).
+  Lá o ritmo aceita décimos (ex.: 14,3) e a duração qualquer minuto de 10 a 50.
 
 O `Application.Storage` fica reservado para dados (histórico).
 
 ## Treino gerado (ritmo máx. V)
 
-| Duração | Núcleo                              |
-|---------|-------------------------------------|
-| 10–15   | 30 s a 95% V / 30 s recuperação     |
-| 20–30   | 60 s a 90% V / 60 s recuperação     |
-| 35–50   | 2 min a 85% V / 90 s recuperação    |
+| Duração (min) | Núcleo                              |
+|---------------|-------------------------------------|
+| 10–17         | 30 s a 95% V / 30 s recuperação     |
+| 18–33         | 60 s a 90% V / 60 s recuperação     |
+| 34–50         | 2 min a 85% V / 90 s recuperação    |
+
+(O padrão é escolhido pelo tempo que sobra para o núcleo depois de aquecimento e
+desaquecimento. A conta fecha exatamente em todas as durações de 10 a 50 min.)
 
 Aquecimento: 1 min caminhando a 5,5 km/h + trote a 58% V. Desaquecimento: trote a 50% V +
 1 min a 5,0 km/h. A recuperação é 50% V, com piso de 6,0 km/h.
@@ -142,7 +158,7 @@ monkeydo bin\HiitEsteira.prg fr965
 
 - [x] v1a: estrutura, gerador, motor do treino, alertas, telas de início/treino/resumo
 - [x] Settings: ritmo máximo, duração e unidade (no relógio e no app Garmin Connect)
-- [ ] Histórico de treinos (Application.Storage) + tela de listagem
+- [x] Histórico de treinos (Application.Storage) + tela de listagem
 - [ ] Modo personalizado: sequência manual de blocos (ritmo + tempo)
 - [ ] Contagem regressiva (3-2-1) antes de cada troca
 - [ ] Futuro: ler velocidade real de footpod; gravar a sessão como atividade FIT

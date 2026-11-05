@@ -16,12 +16,12 @@ module Config {
     const RITMO_MAX_PADRAO = 14.0;  // km/h
     const RITMO_MAX_MIN = 8.0;
     const RITMO_MAX_MAX = 25.0;
-    const RITMO_PASSO = 1.0;        // UP/DOWN no ajuste do relógio: ±1 km/h (pedido do usuário)
+    const RITMO_PASSO = 0.5;        // UP/DOWN no ajuste do relógio: ±0,5 km/h
 
     const DURACAO_PADRAO = 30;      // minutos
     const DURACAO_MIN = 10;
     const DURACAO_MAX = 50;
-    const DURACAO_PASSO = 5;
+    const DURACAO_PASSO = 1;        // UP/DOWN: ±1 min (o gerador fecha a conta em qualquer minuto)
 
     // Acelera o relógio do treino (1 = tempo real). Use 30 no simulador para ver as
     // trocas de bloco sem esperar o treino inteiro. VOLTE PARA 1 antes de instalar!
@@ -67,9 +67,8 @@ module Config {
 
     // ---- Duração ----
 
-    // Arredonda para o múltiplo de 5 mais próximo e limita a 10..50.
+    // Limita a 10..50 min.
     function limitarDuracao(min as Number) as Number {
-        min = ((min + DURACAO_PASSO / 2) / DURACAO_PASSO) * DURACAO_PASSO;
         if (min < DURACAO_MIN) { return DURACAO_MIN; }
         if (min > DURACAO_MAX) { return DURACAO_MAX; }
         return min;

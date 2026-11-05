@@ -1,5 +1,5 @@
 // FimView.mc — resumo ao terminar (ou interromper) o treino.
-// Na próxima iteração é aqui que o treino será gravado no histórico (Storage).
+// O treino já foi gravado no histórico pela TreinoView; aqui só informamos se deu certo.
 
 import Toybox.Graphics;
 import Toybox.Lang;
@@ -7,10 +7,12 @@ import Toybox.WatchUi;
 
 class FimView extends WatchUi.View {
     private var _motor as MotorTreino;
+    private var _salvo as Boolean;
 
-    function initialize(motor as MotorTreino) {
+    function initialize(motor as MotorTreino, salvo as Boolean) {
         View.initialize();
         _motor = motor;
+        _salvo = salvo;
     }
 
     function onUpdate(dc as Graphics.Dc) as Void {
@@ -29,7 +31,8 @@ class FimView extends WatchUi.View {
         dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
         var tiros = _motor.esforcosConcluidos().toString() + " de " + _motor.treino().contarEsforcos().toString() + " tiros";
         dc.drawText(cx, h * 0.60, Graphics.FONT_TINY, tiros, Tela.CENTRO);
-        dc.drawText(cx, h * 0.70, Graphics.FONT_XTINY, _motor.treino().nome, Tela.CENTRO);
+        var aviso = _salvo ? "Salvo no histórico" : "Curto demais p/ salvar";
+        dc.drawText(cx, h * 0.70, Graphics.FONT_XTINY, aviso, Tela.CENTRO);
 
         dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx, h * 0.84, Graphics.FONT_XTINY, "BACK p/ voltar", Tela.CENTRO);

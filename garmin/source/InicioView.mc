@@ -1,8 +1,8 @@
 // InicioView.mc — tela inicial: mostra o treino que será gerado e permite ajustar a duração.
 //
 // Controles:
-//   UP / DOWN  : duração +5 / -5 min (10 a 50)
-//   MENU       : ajustes (ritmo máx., duração, unidade) — segurar UP nos Forerunner
+//   UP / DOWN  : duração +1 / -1 min (10 a 50)
+//   MENU       : histórico e ajustes — segurar UP nos Forerunner
 //   START      : inicia o treino
 //   BACK       : sai do app
 
@@ -45,7 +45,7 @@ class InicioView extends WatchUi.View {
         dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx, h * 0.82, Graphics.FONT_XTINY, "START p/ iniciar", Tela.CENTRO);
         dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-        Tela.textoAjustado(dc, h * 0.89, "MENU: ajustes", [Graphics.FONT_XTINY]);
+        Tela.textoAjustado(dc, h * 0.89, "MENU: histórico/ajustes", [Graphics.FONT_XTINY]);
     }
 }
 
