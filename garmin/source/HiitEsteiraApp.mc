@@ -21,6 +21,12 @@ class HiitEsteiraApp extends Application.AppBase {
     function onStop(state as Dictionary?) as Void {
     }
 
+    // Chamado quando o usuário salva as configurações no app Garmin Connect
+    // com o app aberto no relógio: basta redesenhar (Config lê sempre das Properties).
+    function onSettingsChanged() as Void {
+        WatchUi.requestUpdate();
+    }
+
     // Sem anotação de tipo de retorno de propósito: a assinatura oficial mudou entre
     // versões do SDK (Array -> tupla). Sem anotação compila em todas.
     function getInitialView() {

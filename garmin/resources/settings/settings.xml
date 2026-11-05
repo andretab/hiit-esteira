@@ -1,0 +1,25 @@
+<!-- Tela de configurações do app no Garmin Connect (celular). -->
+<settings>
+    <setting propertyKey="@Properties.ritmoMax" title="@Strings.TituloRitmo" prompt="@Strings.PromptRitmo">
+        <settingConfig type="numeric" min="8" max="25" />
+    </setting>
+    <setting propertyKey="@Properties.duracaoMin" title="@Strings.TituloDuracao">
+        <settingConfig type="list">
+            <listEntry value="10">@Strings.Min10</listEntry>
+            <listEntry value="15">@Strings.Min15</listEntry>
+            <listEntry value="20">@Strings.Min20</listEntry>
+            <listEntry value="25">@Strings.Min25</listEntry>
+            <listEntry value="30">@Strings.Min30</listEntry>
+            <listEntry value="35">@Strings.Min35</listEntry>
+            <listEntry value="40">@Strings.Min40</listEntry>
+            <listEntry value="45">@Strings.Min45</listEntry>
+            <listEntry value="50">@Strings.Min50</listEntry>
+        </settingConfig>
+    </setting>
+    <setting propertyKey="@Properties.unidade" title="@Strings.TituloUnidade">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.UnidadeKmh</listEntry>
+            <listEntry value="1">@Strings.UnidadePace</listEntry>
+        </settingConfig>
+    </setting>
+</settings>

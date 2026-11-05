@@ -1,0 +1,10 @@
+<!--
+    Propriedades = configurações do usuário. Diferente do Storage, elas aparecem no
+    app Garmin Connect (celular) via settings.xml e podem ser editadas por lá.
+    Os ids aqui são as chaves usadas em Config.mc.
+-->
+<properties>
+    <property id="ritmoMax" type="float">14.0</property>
+    <property id="duracaoMin" type="number">30</property>
+    <property id="unidade" type="number">0</property>
+</properties>

@@ -2,10 +2,9 @@
 //
 // Controles:
 //   UP / DOWN  : duração +5 / -5 min (10 a 50)
-//   MENU       : alterna km/h <-> min/km   (segurar UP na maioria dos Forerunner)
+//   MENU       : ajustes (ritmo máx., duração, unidade) — segurar UP nos Forerunner
 //   START      : inicia o treino
 //   BACK       : sai do app
-// (Ritmo máximo ajustável chega na próxima iteração, com as settings.)
 
 import Toybox.Graphics;
 import Toybox.Lang;
@@ -44,7 +43,9 @@ class InicioView extends WatchUi.View {
             Tela.CENTRO);
 
         dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, h * 0.84, Graphics.FONT_XTINY, "START p/ iniciar", Tela.CENTRO);
+        dc.drawText(cx, h * 0.82, Graphics.FONT_XTINY, "START p/ iniciar", Tela.CENTRO);
+        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+        Tela.textoAjustado(dc, h * 0.89, "MENU: ajustes", [Graphics.FONT_XTINY]);
     }
 }
 
@@ -76,8 +77,7 @@ class InicioDelegate extends WatchUi.BehaviorDelegate {
     }
 
     function onMenu() as Boolean {
-        Config.alternarUnidade();
-        WatchUi.requestUpdate();
+        Ajustes.abrir();
         return true;
     }
 }

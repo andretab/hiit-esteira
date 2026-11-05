@@ -16,7 +16,8 @@ garmin/
     ├── HiitEsteiraApp.mc # entrada; abre a InicioView
     ├── Modelo.mc         # TipoBloco, Intervalo, Treino (ritmo sempre em km/h)
     ├── Unidades.mc       # km/h <-> min/km e formatação de tempo (só exibição)
-    ├── Config.mc         # preferências no Application.Storage
+    ├── Config.mc         # preferências em Application.Properties
+    ├── Ajustes.mc        # menu de ajustes + tela de ajuste numérico
     ├── Gerador.mc        # gera aquecimento + esforço/recuperação + desaquecimento
     ├── MotorTreino.mc    # máquina de estados do treino (sem UI)
     ├── Alertas.mc        # vibração, tom e luz
@@ -45,9 +46,22 @@ Views/Delegates  ──►  MotorTreino  ──►  Treino/Intervalo
 
 | Tela    | START             | UP / DOWN            | MENU (segurar UP) | BACK                 |
 |---------|-------------------|----------------------|-------------------|----------------------|
-| Início  | inicia o treino   | duração +5 / −5 min  | km/h ↔ min/km     | sai do app           |
+| Início  | inicia o treino   | duração +5 / −5 min  | abre os ajustes   | sai do app           |
+| Ajustes | edita o item      | navega               | —                 | volta                |
+| Ajuste  | salva             | ritmo ±1 km/h · duração ±5 min | —       | cancela              |
 | Treino  | pausa / retoma    | km/h ↔ min/km        | —                 | confirma e encerra   |
 | Resumo  | volta ao início   | —                    | —                 | volta ao início      |
+
+### Configurações
+
+Ritmo máximo (8–25 km/h), duração (10–50 min) e unidade ficam em `Application.Properties`
+(`resources/settings/`). Dá para editar de dois jeitos, e ambos gravam no mesmo lugar:
+
+- **No relógio:** MENU na tela inicial (segurar UP nos Forerunner).
+- **No celular:** app Garmin Connect → seu relógio → Connect IQ → HIIT Esteira → Configurações.
+  Lá o ritmo aceita décimos (ex.: 14,3).
+
+O `Application.Storage` fica reservado para dados (histórico).
 
 ## Treino gerado (ritmo máx. V)
 
@@ -127,7 +141,7 @@ monkeydo bin\HiitEsteira.prg fr965
 ## Roadmap
 
 - [x] v1a: estrutura, gerador, motor do treino, alertas, telas de início/treino/resumo
-- [ ] Settings: ritmo máximo, duração e unidade (no relógio e no app Garmin Connect)
+- [x] Settings: ritmo máximo, duração e unidade (no relógio e no app Garmin Connect)
 - [ ] Histórico de treinos (Application.Storage) + tela de listagem
 - [ ] Modo personalizado: sequência manual de blocos (ritmo + tempo)
 - [ ] Contagem regressiva (3-2-1) antes de cada troca
