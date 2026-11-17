@@ -110,14 +110,25 @@ class DetalheTreinoView extends WatchUi.View {
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx, h * 0.44, Graphics.FONT_NUMBER_MEDIUM, Unidades.formatarTempo(_r.feitoSeg), Tela.CENTRO);
 
+        // Linhas abaixo do tempo; registros antigos (sem métricas) mostram plano e nome.
+        var linhas = [_r.tiros.toString() + " de " + _r.tirosPlanejados.toString() + " tiros"] as Array<String>;
+        var m = _r.metricas;
+        if (m != null) {
+            linhas.add(m.textoGasto());
+            if (m.temFc()) {
+                linhas.add(m.textoFc());
+            }
+        } else {
+            linhas.add("de " + Unidades.formatarTempo(_r.planejadoSeg) + " planejados");
+        }
+        linhas.add("Pico " + Unidades.formatarRitmo(_r.ritmoPico, Config.unidade()));
+        if (linhas.size() < 4) {
+            linhas.add(_r.nome);
+        }
         dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, h * 0.59, Graphics.FONT_XTINY,
-            "de " + Unidades.formatarTempo(_r.planejadoSeg) + " planejados", Tela.CENTRO);
-        dc.drawText(cx, h * 0.68, Graphics.FONT_TINY,
-            _r.tiros.toString() + " de " + _r.tirosPlanejados.toString() + " tiros", Tela.CENTRO);
-        Tela.textoAjustado(dc, h * 0.78,
-            "Pico " + Unidades.formatarRitmo(_r.ritmoPico, Config.unidade()), [Graphics.FONT_XTINY]);
-        Tela.textoAjustado(dc, h * 0.86, _r.nome, [Graphics.FONT_XTINY]);
+        for (var k = 0; k < linhas.size(); k++) {
+            Tela.textoAjustado(dc, h * (0.59 + k * 0.09), linhas[k], [Graphics.FONT_TINY, Graphics.FONT_XTINY]);
+        }
     }
 }
 

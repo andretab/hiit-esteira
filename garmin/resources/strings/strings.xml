@@ -12,4 +12,10 @@
     <string id="TituloUnidade">Unidade de ritmo</string>
     <string id="UnidadeKmh">km/h</string>
     <string id="UnidadePace">min/km</string>
+
+    <!-- Campos extras da atividade no Garmin Connect -->
+    <string id="FitVelAlvo">Velocidade-alvo</string>
+    <string id="FitDistAlvo">Distância (ritmo-alvo)</string>
+    <string id="FitKmh">km/h</string>
+    <string id="FitKm">km</string>
 </strings>

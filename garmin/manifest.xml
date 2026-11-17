@@ -5,8 +5,10 @@
       Timer, vibração e tom a cada troca de bloco.
     - minApiLevel 3.2.0: cobre Attention.playTone/vibrate, Application.Storage e
       todos os Forerunner/Fenix/Epix/Venu dos últimos anos.
-    - Sem permissões: Storage e Attention não exigem. (Quando gravarmos FIT no futuro,
-      entra <iq:uses-permission id="Fit"/>.)
+    - Permissões: Fit (gravar o treino como atividade Corrida > Esteira), FitContributor
+      (campos extras na atividade), Sensor (frequência
+      cardíaca) e UserProfile (peso, idade, sexo e zonas de FC, para calorias).
+      Storage e Attention não exigem.
 -->
 <iq:manifest version="3" xmlns:iq="http://www.garmin.com/xml/connectiq">
     <iq:application id="f1998ea00ebd4a06983b7a3ccefc974f"
@@ -29,7 +31,12 @@
             <!-- Venu -->
             <iq:product id="venu3"/>
         </iq:products>
-        <iq:permissions/>
+        <iq:permissions>
+            <iq:uses-permission id="Fit"/>
+            <iq:uses-permission id="FitContributor"/>
+            <iq:uses-permission id="Sensor"/>
+            <iq:uses-permission id="UserProfile"/>
+        </iq:permissions>
         <iq:languages>
             <iq:language>por</iq:language>
         </iq:languages>

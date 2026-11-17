@@ -1,0 +1,15 @@
+<!-- Como os campos gravados pelo GravadorAtividade (Gravacao.mc) aparecem no Garmin Connect. -->
+<resources>
+    <fitContributions>
+        <!-- 0: velocidade-alvo segundo a segundo -> gráfico -->
+        <fitField id="0" displayInChart="true" sortOrder="0" precision="1"
+                  chartTitle="@Strings.FitVelAlvo" dataLabel="@Strings.FitVelAlvo"
+                  unitLabel="@Strings.FitKmh" fillColor="#E8452C" />
+        <!-- 1: velocidade-alvo de cada volta (= bloco) -> aba Voltas -->
+        <fitField id="1" displayInActivityLaps="true" sortOrder="1" precision="1"
+                  dataLabel="@Strings.FitVelAlvo" unitLabel="@Strings.FitKmh" />
+        <!-- 2: distância pelo ritmo-alvo -> resumo -->
+        <fitField id="2" displayInActivitySummary="true" sortOrder="2" precision="2"
+                  dataLabel="@Strings.FitDistAlvo" unitLabel="@Strings.FitKm" />
+    </fitContributions>
+</resources>

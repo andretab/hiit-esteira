@@ -12,6 +12,7 @@ garmin/
 ├── resources/
 │   ├── strings/strings.xml
 │   ├── settings/         # properties.xml + settings.xml (configurações no celular)
+│   ├── fit/              # como os campos extras aparecem no Garmin Connect
 │   └── drawables/        # ícone do launcher
 └── source/
     ├── HiitEsteiraApp.mc # entrada; abre a InicioView
@@ -28,6 +29,8 @@ garmin/
     ├── Gerador.mc        # gera aquecimento + esforço/recuperação + desaquecimento
     ├── MotorTreino.mc    # máquina de estados do treino (sem UI)
     ├── Alertas.mc        # vibração, tom e luz
+    ├── Metricas.mc       # calorias, distância, FC e zonas (coletor + fórmulas)
+    ├── Gravacao.mc       # grava o treino como atividade (Corrida > Esteira)
     ├── Tela.mc           # cores, nomes, barra e texto que se ajusta à tela redonda
     ├── InicioView.mc     # tela inicial (duração, prévia)
     ├── TreinoView.mc     # tela do treino + delegates (pausa, encerrar)
@@ -101,6 +104,23 @@ Ao terminar (ou encerrar) um treino com pelo menos 1 minuto, ele é gravado no
 `Application.Storage`: data/hora, tempo feito e planejado, tiros feitos/planejados, ritmo de
 pico e se foi concluído. Ficam os últimos 30. MENU → Histórico mostra a lista (mais novo
 primeiro); selecionar abre o detalhe; "Apagar tudo" pede confirmação.
+
+### Atividade no Garmin Connect
+
+Todo treino com pelo menos 1 minuto é **gravado como atividade** (Corrida > Esteira) e vai
+para o Garmin Connect na próxima sincronização, com FC, calorias e carga de treino da
+própria Garmin. O app acrescenta:
+
+- **Uma volta por bloco**: a aba Voltas mostra cada aquecimento, tiro e recuperação.
+- **Velocidade-alvo**: gráfico ao longo do treino e coluna na aba Voltas.
+- **Distância (ritmo-alvo)**: no resumo. A distância "oficial" da Garmin na esteira vem do
+  sensor de pulso e costuma errar; esta é a que a esteira mostraria.
+
+Pausar no app pausa a gravação. Se o app for fechado no meio do treino, a atividade é salva
+assim mesmo. Treinos com menos de 1 minuto são descartados.
+
+No fim, o resumo mostra tempo, tiros, kcal, km e FC média/máxima; DOWN abre o tempo em cada
+zona de FC. O histórico do relógio guarda essas métricas também.
 
 ### Configurações
 

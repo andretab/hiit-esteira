@@ -14,6 +14,9 @@
 //   0.86  tempo total decorrido / duração
 //
 // Controles: START pausa/retoma · UP/DOWN alterna unidade · BACK pede confirmação p/ encerrar.
+//
+// Gravação: o treino é gravado como atividade (Corrida > Esteira) pelo GravadorAtividade;
+// cada troca de bloco vira uma volta e a pausa do app pausa a gravação.
 
 import Toybox.Attention;
 import Toybox.Graphics;
@@ -35,10 +38,16 @@ class TreinoView extends WatchUi.View {
     private var _finalizada as Boolean = false;
     private var _contagemLigada as Boolean;
     private var _ultimaContagem as Number = 0;   // último número da contagem já tocado neste bloco
+    private var _metricas as ColetorMetricas;
+    private var _ultimoMsAmostrado as Number = 0;
+    private var _gravador as GravadorAtividade;
 
     function initialize(treino as Treino) {
         View.initialize();
         _motor = new MotorTreino(treino);
+        _metricas = new ColetorMetricas(new PerfilMetricas());
+        Metricas.ligarSensorFc();
+        _gravador = new GravadorAtividade();
         _unidade = Config.unidade();
         _contagemLigada = Config.contagem();   // lido uma vez: evita ler Properties 4x/s
         _timer = new Timer.Timer();
@@ -48,6 +57,8 @@ class TreinoView extends WatchUi.View {
         _confirmando = false;  // voltando da tela de confirmação
         if (_motor.estado() == ESTADO_PRONTO) {
             _motor.iniciar();
+            _gravador.iniciar(_motor.blocoAtual().kmh);
+            $.treinoEmAndamento = self;
             Alertas.trocaDeBloco(_motor.blocoAtual().tipo);  // sinal de largada
             _timer.start(method(:aoTick), INTERVALO_TICK_MS, true);
         }
@@ -55,13 +66,16 @@ class TreinoView extends WatchUi.View {
 
     // Callback do Timer. Precisa ser público para method(:aoTick).
     function aoTick() as Void {
+        var kmhAntes = _motor.blocoAtual().kmh;   // ritmo do trecho que acabou de passar
         var evento = _motor.atualizar();
+        amostrarMetricas(kmhAntes);
         if (evento == EVENTO_FIM) {
             Alertas.fim();
             finalizar();
             return;
         }
         if (evento == EVENTO_TROCA) {
+            _gravador.novaVolta(kmhAntes, _motor.blocoAtual().kmh);
             Alertas.trocaDeBloco(_motor.blocoAtual().tipo);
             _ultimaContagem = 0;
             _ultimoSeg = -1;  // força redesenho
@@ -81,10 +95,24 @@ class TreinoView extends WatchUi.View {
         }
     }
 
+    // Integra calorias/distância/FC do tempo que passou desde a última amostra.
+    // Pausado, o motor não avança: dt = 0 e nada é somado.
+    private function amostrarMetricas(kmh as Float) as Void {
+        var agora = _motor.decorridoMs();
+        var dt = (agora - _ultimoMsAmostrado) / 1000.0;
+        _ultimoMsAmostrado = agora;
+        _metricas.amostrar(dt, kmh, Metricas.fcAtual());
+    }
+
     // ---- Ações chamadas pelo delegate ----
 
     function alternarPausa() as Void {
         _motor.alternarPausa();
+        if (_motor.estado() == ESTADO_PAUSADO) {
+            _gravador.pausar();
+        } else {
+            _gravador.retomar();
+        }
         Alertas.vibrar([new Attention.VibeProfile(50, 150)]);
         WatchUi.requestUpdate();
     }
@@ -112,15 +140,34 @@ class TreinoView extends WatchUi.View {
     // Troca esta view pela tela de resumo (BACK no resumo volta ao início).
     function finalizar() as Void {
         if (_finalizada) { return; }
-        _finalizada = true;
-        _timer.stop();
-        _motor.encerrar();
-        var salvo = Historico.registrar(_motor);
+        var fim = fecharTreino();
         if (_confirmando) {
             // Treino acabou enquanto a confirmação estava aberta: tira ela antes.
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
         }
-        WatchUi.switchToView(new FimView(_motor, salvo), new FimDelegate(), WatchUi.SLIDE_UP);
+        var view = new FimView(_motor, fim);
+        WatchUi.switchToView(view, new FimDelegate(view), WatchUi.SLIDE_UP);
+    }
+
+    // App fechado no meio do treino (ex.: sistema encerrou o app): salva o que deu.
+    function finalizarAoSair() as Void {
+        if (!_finalizada) {
+            fecharTreino();
+        }
+    }
+
+    // Para o relógio, salva a atividade (ou descarta, se curta) e grava o histórico.
+    private function fecharTreino() as ResultadoFim {
+        _finalizada = true;
+        _timer.stop();
+        _motor.encerrar();
+        $.treinoEmAndamento = null;
+        var salvar = _motor.decorridoSeg() >= Historico.MINIMO_SEG;
+        var kcalGarmin = _gravador.caloriasGarmin();   // ler antes de encerrar a gravação
+        var metricas = _metricas.resumo(kcalGarmin);
+        var atividade = _gravador.encerrar(salvar, metricas.km);
+        var historico = Historico.registrar(_motor, metricas);
+        return new ResultadoFim(metricas, historico, atividade);
     }
 
     // ---- Desenho ----

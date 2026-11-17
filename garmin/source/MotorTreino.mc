@@ -137,6 +137,7 @@ class MotorTreino {
     }
 
     function decorridoSeg() as Number { return _decorridoMs / 1000; }
+    function decorridoMs() as Number { return _decorridoMs; }
     function totalSeg() as Number { return _totalMs / 1000; }
 
     // Progresso total 0.0 .. 1.0

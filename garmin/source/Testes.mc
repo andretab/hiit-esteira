@@ -156,3 +156,42 @@ function testeGeradorRegrasDeEsteira(logger as Test.Logger) as Boolean {
     Test.assertEqual(Unidades.valorRitmo(13.5, Unidades.UNIDADE_KMH, ","), "13,5");
     return true;
 }
+
+// Histórico: métricas vão e voltam do Storage; registro antigo (sem métricas) continua válido.
+(:test)
+function testeHistoricoComMetricas(logger as Test.Logger) as Boolean {
+    var r = new RegistroTreino(1700000000, "HIIT 30 min", 1800, 1800, 10, 10, 14.0, true);
+    r.metricas = new ResumoMetricas(312, 4.24, 151, 178, [60, 300, 600, 500, 340] as Array<Number>);
+    var volta = RegistroTreino.fromDict(r.toDict()) as RegistroTreino;
+    var m = volta.metricas as ResumoMetricas;
+    Test.assertEqual(m.kcal, 312);
+    Test.assertEqual(m.fcMax, 178);
+    Test.assertEqual(m.zonasSeg[2], 600);
+    Test.assertEqual(m.textoGasto(), "312 kcal · 4,2 km");
+    Test.assertEqual(m.textoFc(), "FC 151 méd · 178 máx");
+
+    var antigo = { "i" => 1, "n" => "x", "f" => 90, "p" => 600, "t" => 1, "tp" => 5, "v" => 12.0, "c" => false };
+    var a = RegistroTreino.fromDict(antigo);
+    Test.assert(a != null);
+    Test.assert((a as RegistroTreino).metricas == null);
+    return true;
+}
+
+// Coletor: sem FC usa a estimativa pelo ritmo; com FC registra média, máxima e zonas.
+(:test)
+function testeColetorResumo(logger as Test.Logger) as Boolean {
+    var p = new PerfilMetricas();
+    p.limites = [100, 120, 140, 160, 180, 200] as Array<Number>;
+    var c = new ColetorMetricas(p);
+    c.amostrar(1800.0, 12.0, null);           // 30 min a 12 km/h sem FC
+    var r = c.resumo(null);
+    Test.assert(r.km > 5.99 && r.km < 6.01);
+    Test.assert(r.kcal > 0);
+    Test.assert(!r.temFc());
+    c.amostrar(60.0, 12.0, 150);              // 1 min em Z3
+    r = c.resumo(400);                          // calorias da Garmin têm prioridade
+    Test.assertEqual(r.kcal, 400);
+    Test.assertEqual(r.fcMedia, 150);
+    Test.assertEqual(r.zonasSeg[2], 60);
+    return true;
+}

@@ -8,6 +8,8 @@
 //   segura). Por isso fromDict valida cada campo e devolve null se algo estiver errado;
 //   registro ruim é descartado em vez de derrubar o app.
 // - Treinos com menos de MINIMO_SEG não são salvos (START apertado sem querer).
+// - Métricas (kcal, km, FC, zonas) são campos OPCIONAIS: registros antigos, sem elas,
+//   continuam válidos e só não mostram essas linhas.
 
 import Toybox.Application;
 import Toybox.Lang;
@@ -23,6 +25,7 @@ class RegistroTreino {
     public var tirosPlanejados as Number;
     public var ritmoPico as Float;        // km/h
     public var concluido as Boolean;
+    public var metricas as ResumoMetricas? = null;
 
     function initialize(inicio as Number, nome as String, feitoSeg as Number, planejadoSeg as Number,
                         tiros as Number, tirosPlanejados as Number, ritmoPico as Float, concluido as Boolean) {
@@ -37,10 +40,19 @@ class RegistroTreino {
     }
 
     function toDict() as Dictionary {
-        return {
+        var d = {
             "i" => inicio, "n" => nome, "f" => feitoSeg, "p" => planejadoSeg,
             "t" => tiros, "tp" => tirosPlanejados, "v" => ritmoPico, "c" => concluido
         };
+        var m = metricas;
+        if (m != null) {
+            d["k"] = m.kcal;
+            d["d"] = m.km;
+            d["fm"] = m.fcMedia;
+            d["fx"] = m.fcMax;
+            d["z"] = m.zonasSeg;
+        }
+        return d;
     }
 
     // Devolve null se o dicionário não tiver o formato esperado.
@@ -52,8 +64,29 @@ class RegistroTreino {
                 || !(v instanceof Float || v instanceof Number) || !(c instanceof Boolean)) {
             return null;
         }
-        return new RegistroTreino(i as Number, n as String, f as Number, p as Number,
-                                  t as Number, tp as Number, (v as Numeric).toFloat(), c as Boolean);
+        var r = new RegistroTreino(i as Number, n as String, f as Number, p as Number,
+                                   t as Number, tp as Number, (v as Numeric).toFloat(), c as Boolean);
+        r.metricas = RegistroTreino.metricasDe(d);
+        return r;
+    }
+
+    // Métricas opcionais; null se ausentes ou com formato inesperado.
+    static function metricasDe(d as Dictionary) as ResumoMetricas? {
+        var k = d["k"]; var km = d["d"]; var fm = d["fm"]; var fx = d["fx"]; var z = d["z"];
+        if (!(k instanceof Number) || !(km instanceof Float || km instanceof Number)
+                || !(fm instanceof Number) || !(fx instanceof Number)) {
+            return null;
+        }
+        var zonas = [0, 0, 0, 0, 0] as Array<Number>;
+        if (z instanceof Array && (z as Array).size() == 5) {
+            for (var q = 0; q < 5; q++) {
+                var v = (z as Array)[q];
+                if (v instanceof Number) {
+                    zonas[q] = v as Number;
+                }
+            }
+        }
+        return new ResumoMetricas(k as Number, (km as Numeric).toFloat(), fm as Number, fx as Number, zonas);
     }
 
     // "04/11 18:30" no fuso do relógio.
@@ -117,7 +150,7 @@ module Historico {
     }
 
     // Salva o treino que acabou. Devolve true se gravou.
-    function registrar(motor as MotorTreino) as Boolean {
+    function registrar(motor as MotorTreino, metricas as ResumoMetricas?) as Boolean {
         if (motor.decorridoSeg() < MINIMO_SEG) {
             return false;
         }
@@ -125,6 +158,7 @@ module Historico {
         var novo = new RegistroTreino(motor.inicioEpoch(), treino.nome, motor.decorridoSeg(),
             motor.totalSeg(), motor.esforcosConcluidos(), treino.contarEsforcos(),
             treino.ritmoPico(), motor.concluido());
+        novo.metricas = metricas;
 
         var lista = [novo.toDict()] as Array<Dictionary>;
         var antigos = lerBruto();

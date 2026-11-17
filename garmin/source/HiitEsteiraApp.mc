@@ -21,6 +21,11 @@ class HiitEsteiraApp extends Application.AppBase {
     }
 
     function onStop(state as Dictionary?) as Void {
+        // Se o app for fechado no meio do treino, a atividade é salva em vez de perdida.
+        var t = $.treinoEmAndamento;
+        if (t != null) {
+            t.finalizarAoSair();
+        }
     }
 
     // Chamado quando o usuário salva as configurações no app Garmin Connect com o app
