@@ -132,6 +132,23 @@ teste('ritmos entre o piso e o ritmo máximo, inclinação 0–12%', () => {
   });
 });
 
+teste('ritmos gerados em km/h inteiros (fáceis de ajustar na esteira)', () => {
+  cadaSessao((s, c) => {
+    for (const seg of s.segmentos) verdade(Number.isInteger(seg.ritmo), `${c.protocolo} ${c.nivel} ${c.duracao} min: ${seg.ritmo} km/h`);
+  });
+  for (const ritmoMax of [10.5, 13.7, 16]) {
+    for (const seg of gerarTreino({ ritmoMax, duracao: 30, variacao: 3 })) {
+      verdade(Number.isInteger(seg.ritmo) && seg.ritmo <= ritmoMax, `V=${ritmoMax}: ${seg.ritmo}`);
+    }
+  }
+});
+
+teste('nenhum trecho com menos de 40 s', () => {
+  cadaSessao((s, c) => {
+    for (const seg of s.segmentos) verdade(seg.duracao >= 40, `${c.protocolo} ${c.nivel} ${c.duracao} min: ${seg.rotulo} com ${seg.duracao} s`);
+  });
+});
+
 teste('começa com aquecimento e termina com desaceleração', () => {
   cadaSessao((s, c) => {
     igual(s.segmentos[0].fase, 'aquecimento', `${c.protocolo}:`);
@@ -147,10 +164,10 @@ teste('esforço ≥ 95% do máximo não passa de 3 min por sessão', () => {
   });
 });
 
-teste('iniciante não recebe sprints, Tabata nem esforço acima de 90%', () => {
+teste('iniciante não recebe sprints, tiros 45/75 nem esforço acima de 90%', () => {
   for (const duracao of DURACOES) {
     const ids = protocolosElegiveis({ duracao, nivel: 'iniciante' });
-    verdade(!ids.includes('sprint') && !ids.includes('tabata'), `${duracao} min: ${ids}`);
+    verdade(!ids.includes('sprint') && !ids.includes('tiros45'), `${duracao} min: ${ids}`);
   }
   cadaSessao((s, c) => {
     if (c.nivel !== 'iniciante') return;

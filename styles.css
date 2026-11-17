@@ -359,7 +359,8 @@ body.imersivo main { max-width: none; padding: 0; }
 .exec-metricas dt svg { width: 24px; height: 24px; stroke-width: 1.6; }
 .exec-metricas dd { margin: 8px 0 0; font: 800 32px/1 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .exec-metricas dd small { display: block; margin-top: 3px; font-size: 13px; font-weight: 700; letter-spacing: .08em; opacity: .7; }
-.exec-metricas > div:first-child dd { font-size: 48px; }
+/* as três métricas do treino com o mesmo tamanho do intervalo */
+.exec-cor .exec-metricas dd { font-size: clamp(36px, 12vw, 48px); }
 .exec-cor.alerta #exec-relogio { animation: piscar .5s steps(2, start) infinite; }
 @keyframes piscar { to { visibility: hidden; } }
 

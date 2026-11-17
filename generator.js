@@ -16,7 +16,7 @@ export const RITMO_MINIMO = 4;    // piso de qualquer segmento (15:00 min/km)
 export const RITMO_MAX_MIN = 8;   // menor ritmo máximo aceito (7:30 min/km)
 export const RITMO_TETO = 25;
 export const INCLINACAO_BASE = 1;
-export const CAMINHADA = 5.5;     // km/h — caminhada de recuperação
+export const CAMINHADA = 5;       // km/h — caminhada de recuperação
 export const CAMINHADA_RAPIDA = 6;
 
 /* =========================================================
@@ -225,8 +225,11 @@ function hashTexto(texto) {
    ========================================================= */
 
 // Construtor de segmentos para um ritmo máximo V.
-function fabrica(V) {
-  const kmh = (pct) => Math.max(RITMO_MINIMO, Math.min(V, arred1(V * pct)));
+// Ritmos gerados são km/h INTEIROS: na esteira é muito mais rápido apertar até "12" do que "12,3".
+// O teto também é inteiro (iniciante: até 90% V arredondado para baixo).
+function fabrica(V, nivel = 1) {
+  const teto = Math.floor((nivel === 0 ? V * 0.9 : V) + 1e-9);
+  const kmh = (pct) => Math.max(RITMO_MINIMO, Math.min(teto, Math.round(V * pct)));
   // recuperação: abaixo de ~6,5 km/h ninguém "trota", então vira caminhada rápida
   const recKmh = (pct) => {
     const v = kmh(pct);
@@ -258,37 +261,52 @@ export function minutosDesaceleracao(duracaoMin) {
   return 5;
 }
 
-// Aquecimento: rampa de caminhada (5,5 km/h) até trote (~58% V).
-// Sessões intensas (≥ 85% V) ganham acelerações progressivas de 20 s no final ("AQ+").
-function aquecimento(V, minutos, intenso) {
-  const segs = [];
-  const comAceleracoes = intenso && minutos >= 5;
-  const minutosRampa = comAceleracoes ? minutos - 2 : minutos;
-  const ini = Math.max(CAMINHADA, RITMO_MINIMO);
-  const fim = Math.max(ini, V * 0.58);
-  for (let i = 0; i < minutosRampa; i++) {
-    const t = minutosRampa === 1 ? 1 : i / (minutosRampa - 1);
-    segs.push(criarSegmento('aquecimento', ini + (fim - ini) * t, 60, INCLINACAO_BASE, i === 0 ? 'Caminhada' : 'Rampa'));
-  }
-  if (comAceleracoes) {
-    // 2 × (20 s acelerando + 40 s trote): 75% e depois 85% V
-    for (const pct of [0.75, 0.85]) {
-      segs.push(criarSegmento('aquecimento', arred1(V * pct), 20, INCLINACAO_BASE, 'Aceleração'));
-      segs.push(criarSegmento('aquecimento', arred1(V * 0.55), 40, INCLINACAO_BASE, 'Trote'));
+// Junta segmentos vizinhos idênticos (mesma fase, ritmo e inclinação). Com ritmos inteiros,
+// degraus da rampa podem cair no mesmo valor — melhor um trecho de 2 min do que dois de 1 min.
+function fundir(segs) {
+  const saida = [];
+  for (const s of segs) {
+    const ant = saida.at(-1);
+    if (ant && ant.fase === s.fase && ant.forte === s.forte && ant.ritmo === s.ritmo && ant.inclinacao === s.inclinacao) {
+      saida[saida.length - 1] = { ...ant, duracao: ant.duracao + s.duracao };
+    } else {
+      saida.push(s);
     }
   }
-  return segs;
+  return saida;
+}
+
+// Aquecimento: rampa de caminhada (5 km/h) até trote (~58% V), degraus de 1 min.
+// Sessões intensas ganham 2 acelerações de 40 s no final (o trecho mais curto do app é 40 s).
+function aquecimento(V, minutos, intenso) {
+  const segs = [];
+  const comAceleracoes = intenso && minutos >= 6;
+  const minutosRampa = comAceleracoes ? minutos - 3 : minutos;
+  const ini = 5;
+  const fim = Math.max(ini, Math.round(V * 0.58));
+  for (let i = 0; i < minutosRampa; i++) {
+    const t = minutosRampa === 1 ? 1 : i / (minutosRampa - 1);
+    segs.push(criarSegmento('aquecimento', Math.round(ini + (fim - ini) * t), 60, INCLINACAO_BASE, i === 0 ? 'Caminhada' : 'Rampa'));
+  }
+  if (comAceleracoes) {
+    // 2 × (40 s acelerando + 50 s trote): 75% e depois 85% V
+    for (const pct of [0.75, 0.85]) {
+      segs.push(criarSegmento('aquecimento', Math.round(V * pct), 40, INCLINACAO_BASE, 'Aceleração'));
+      segs.push(criarSegmento('aquecimento', Math.round(V * 0.55), 50, INCLINACAO_BASE, 'Trote'));
+    }
+  }
+  return fundir(segs);
 }
 
 // Volta à calma: de ~50% V descendo até caminhada a 5 km/h.
 function desaceleracao(V, minutos) {
   const segs = [];
-  const ini = Math.max(5, V * 0.5);
+  const ini = Math.max(5, Math.round(V * 0.5));
   for (let i = 0; i < minutos; i++) {
     const t = minutos === 1 ? 1 : i / (minutos - 1);
-    segs.push(criarSegmento('desaceleracao', ini + (5 - ini) * t, 60, INCLINACAO_BASE, i === minutos - 1 ? 'Caminhada' : 'Soltando'));
+    segs.push(criarSegmento('desaceleracao', Math.round(ini + (5 - ini) * t), 60, INCLINACAO_BASE, i === minutos - 1 ? 'Caminhada' : 'Soltando'));
   }
-  return segs;
+  return fundir(segs);
 }
 
 /* =========================================================
@@ -330,27 +348,27 @@ export const PROTOCOLOS = {
   },
 
   billat: {
-    nome: '30/30',
-    curto: '30 s forte · 30 s leve',
-    descricao: 'Intermitente de Billat: o consumo de oxigênio fica alto mesmo nas pausas curtas, acumulando muito tempo perto do VO2máx.',
-    fonte: 'Billat et al., 2000',
+    nome: '40/40',
+    curto: '40 s forte · 40 s leve',
+    descricao: 'Intermitente no estilo Billat, alongado para a esteira: o consumo de oxigênio fica alto mesmo nas pausas, acumulando muito tempo perto do VO2máx.',
+    fonte: 'Billat et al., 2000 (adaptado)',
     categoria: 'B', nivelMin: 1, minDur: 20, maxDur: 45, intenso: true,
     objetivos: { gordura: 1, condicionamento: 3, velocidade: 2, resistencia: 1 },
     montar({ disp, nivel, f }) {
       const pct = nivel === 2 ? 0.88 : 0.85;
-      const porSerie = nivel === 2 ? 10 : 8;
-      const ciclo = 60;
+      const porSerie = nivel === 2 ? 8 : 6;
+      const ciclo = 80;
       const pausaSerie = 180;
       // quantas séries completas cabem (com pausa entre elas), até 3
       let series = 1;
       while (series < 3 && (series + 1) * porSerie * ciclo + series * pausaSerie <= disp) series++;
-      const reps = series === 1 ? ate(Math.floor((disp + 30) / ciclo), 16) : porSerie;
-      if (reps < 8) return null;
+      const reps = series === 1 ? ate(Math.floor((disp + 40) / ciclo), 12) : porSerie;
+      if (reps < 6) return null;
       const segs = [];
       for (let s = 0; s < series; s++) {
         segs.push(...repetir(reps, (i) => [
-          f.forte(pct, 30, `Série ${s + 1} · ${i + 1}/${reps}`),
-          ...(i < reps - 1 ? [f.leve(0.45, 30)] : []),
+          f.forte(pct, 40, `Série ${s + 1} · ${i + 1}/${reps}`),
+          ...(i < reps - 1 ? [f.leve(0.45, 40)] : []),
         ]));
         if (s < series - 1) segs.push(f.leve(0.5, pausaSerie, 'Pausa entre séries'));
       }
@@ -359,25 +377,25 @@ export const PROTOCOLOS = {
   },
 
   bangsbo: {
-    nome: '10-20-30',
-    curto: 'Blocos de 30 s leve · 20 s médio · 10 s forte',
-    descricao: 'Blocos de 5 min com aceleração crescente dentro de cada minuto. Muita evidência em pessoas destreinadas e ótimo para a saúde cardiovascular.',
-    fonte: 'Gunnarsson & Bangsbo, J Appl Physiol 2012',
-    categoria: 'B', nivelMin: 0, minDur: 25, maxDur: 50, intenso: true,
+    nome: '60-40-40',
+    curto: 'Blocos de 60 s leve · 40 s médio · 40 s forte',
+    descricao: 'Inspirado no 10-20-30 de Bangsbo, com trechos longos o bastante para a esteira: dentro de cada bloco o ritmo sobe em três degraus, do leve ao forte.',
+    fonte: 'Adaptado de Gunnarsson & Bangsbo, J Appl Physiol 2012',
+    categoria: 'B', nivelMin: 0, minDur: 30, maxDur: 50, intenso: true,
     objetivos: { gordura: 2, condicionamento: 2, velocidade: 1, resistencia: 1 },
     montar({ disp, nivel, f }) {
-      const bloco = 300;
+      const reps = 3;
+      const bloco = reps * 140;
       const pausa = 120;
-      const blocos = ate(Math.floor((disp + pausa) / (bloco + pausa)), [2, 4, 5][nivel]);
+      const blocos = ate(Math.floor((disp + pausa) / (bloco + pausa)), [2, 3, 4][nivel]);
       if (blocos < 2) return null;
-      const pico = [0.9, 0.95, 0.97][nivel];
+      const pico = [0.85, 0.88, 0.9][nivel];
       const segs = [];
       for (let b = 0; b < blocos; b++) {
-        for (let r = 0; r < 5; r++) {
-          segs.push(f.leve(0.52, 30, `Bloco ${b + 1} · ${r + 1}/5`));
-          segs.push(criarSegmento('leve', f.kmh(0.72), 20, INCLINACAO_BASE, 'Médio'));
-          // limite de ~3 min acima de 95% V por sessão: do 4º bloco em diante o pico cai para 93%
-          segs.push(f.forte(b < 3 ? pico : Math.min(pico, 0.93), 10, 'Sprint'));
+        for (let r = 0; r < reps; r++) {
+          segs.push(f.leve(0.52, 60, `Bloco ${b + 1} · ${r + 1}/${reps}`));
+          segs.push(criarSegmento('leve', f.kmh(0.72), 40, INCLINACAO_BASE, 'Médio'));
+          segs.push(f.forte(pico, 40, 'Forte'));
         }
         if (b < blocos - 1) segs.push(f.caminhada(pausa, 'Pausa entre blocos', CAMINHADA_RAPIDA));
       }
@@ -486,17 +504,17 @@ export const PROTOCOLOS = {
 
   subidaCurta: {
     nome: 'Rampas curtas',
-    curto: '30 s em rampa forte · 90 s plano',
+    curto: '45 s em rampa forte · 90 s plano',
     descricao: 'Velocidade moderada e inclinação alta (8–10%). Potência de perna sem precisar correr no limite da esteira.',
     fonte: 'TrainingPeaks',
-    categoria: 'E', nivelMin: 1, minDur: 15, maxDur: 40, intenso: false,
+    categoria: 'E', nivelMin: 1, minDur: 20, maxDur: 40, intenso: false,
     objetivos: { gordura: 2, condicionamento: 2, velocidade: 2, resistencia: 1 },
     montar({ disp, nivel, f }) {
-      const n = ate(Math.floor((disp + 90) / 120), 12);
-      if (n < 6) return null;
+      const n = ate(Math.floor((disp + 90) / 135), 10);
+      if (n < 5) return null;
       const incl = nivel === 2 ? 10 : 8;
       return repetir(n, (i) => [
-        f.forte(0.7, 30, `Rampa ${i + 1}/${n}`, incl),
+        f.forte(0.7, 45, `Rampa ${i + 1}/${n}`, incl),
         ...(i < n - 1 ? [f.leve(0.45, 90)] : []),
       ]);
     },
@@ -513,7 +531,7 @@ export const PROTOCOLOS = {
       const n = ate(Math.floor((disp + 90) / 180), 16);
       if (n < 2) return null;
       const incl = [8, 10, 12][nivel];
-      const v = nivel === 0 ? 5.5 : 6;
+      const v = nivel === 0 ? 5 : 6;
       return repetir(n, (i) => [
         f.forteAbs(v, 90, `Subida ${i + 1}/${n}`, incl),
         ...(i < n - 1 ? [f.caminhada(90, 'Plano', 5)] : []),
@@ -574,45 +592,39 @@ export const PROTOCOLOS = {
   },
 
   sprint: {
-    nome: 'Sprints 30 s',
-    curto: '30 s no máximo · 3,5 min andando',
-    descricao: 'Sprint interval training: poucos tiros curtíssimos no limite com recuperação longa. Só para quem já tem base.',
-    fonte: 'Gist et al., Sports Med 2014',
-    categoria: 'C', nivelMin: 2, minDur: 25, maxDur: 40, intenso: true,
+    nome: 'Sprints 40 s',
+    curto: '40 s quase no máximo · 3 min andando',
+    descricao: 'Sprint interval training: poucos tiros curtos perto do limite com recuperação longa. Só para quem já tem base.',
+    fonte: 'Gist et al., Sports Med 2014 (adaptado)',
+    categoria: 'C', nivelMin: 2, minDur: 25, maxDur: 35, intenso: true,
     objetivos: { gordura: 1, condicionamento: 2, velocidade: 3, resistencia: 0 },
     montar({ disp, f }) {
-      const n = ate(Math.floor((disp + 210) / 240), 6);
-      if (n < 4) return null;
+      // 4 × 40 s = 160 s: dentro do limite de ~3 min perto do máximo por sessão
+      const n = ate(Math.floor((disp + 180) / 220), 4);
+      if (n < 3) return null;
       return repetir(n, (i) => [
-        f.forte(0.97, 30, `Sprint ${i + 1}/${n}`),
-        ...(i < n - 1 ? [f.caminhada(210)] : []),
+        f.forte(0.95, 40, `Sprint ${i + 1}/${n}`),
+        ...(i < n - 1 ? [f.caminhada(180)] : []),
       ]);
     },
   },
 
-  tabata: {
-    nome: 'Tabata',
-    curto: '20 s forte · 40 s leve × 8',
-    descricao: 'Tabata adaptado à esteira: os 10 s de pausa do original viram 40 s, porque a esteira demora para trocar de velocidade.',
-    fonte: 'Tabata et al., MSSE 1996',
-    categoria: 'C', nivelMin: 1, minDur: 15, maxDur: 35, intenso: true,
+  // Substitui o Tabata: 20 s de esforço é curto demais para a esteira trocar de velocidade.
+  tiros45: {
+    nome: '45/75',
+    curto: '45 s forte · 75 s leve',
+    descricao: 'Tiros curtos e rápidos com recuperação maior que o esforço: estímulo de velocidade com tempo de sobra para a esteira trocar de ritmo.',
+    fonte: 'Buchheit & Laursen, Sports Med 2013',
+    categoria: 'C', nivelMin: 1, minDur: 20, maxDur: 40, intenso: true,
     objetivos: { gordura: 1, condicionamento: 2, velocidade: 3, resistencia: 0 },
-    montar({ disp, f }) {
-      const bloco = 8 * 60 - 40;
-      const pausa = 180;
-      const n = ate(Math.floor((disp + pausa) / (bloco + pausa)), 3);
-      if (n < 1) return null;
-      const segs = [];
-      for (let b = 0; b < n; b++) {
-        // tempo total ≥ 95% V limitado a ~2–3 min por sessão: só o 1º bloco vai a 95%
-        const pct = b === 0 ? 0.95 : 0.9;
-        segs.push(...repetir(8, (i) => [
-          f.forte(pct, 20, `Tabata ${n > 1 ? `${b + 1} · ` : ''}${i + 1}/8`),
-          ...(i < 7 ? [f.leve(0.48, 40)] : []),
-        ]));
-        if (b < n - 1) segs.push(f.leve(0.5, pausa, 'Pausa entre blocos'));
-      }
-      return segs;
+    montar({ disp, nivel, f }) {
+      const n = ate(Math.floor((disp + 75) / 120), 10);
+      if (n < 6) return null;
+      const pct = nivel === 2 ? 0.92 : 0.9;
+      return repetir(n, (i) => [
+        f.forte(pct, 45, `Tiro ${i + 1}/${n}`),
+        ...(i < n - 1 ? [f.leve(0.48, 75)] : []),
+      ]);
     },
   },
 
@@ -624,9 +636,9 @@ export const PROTOCOLOS = {
     categoria: 'D', nivelMin: 0, minDur: 15, maxDur: 50, intenso: false,
     objetivos: { gordura: 2, condicionamento: 1, velocidade: 0, resistencia: 3 },
     montar({ disp, nivel, f }) {
-      // com tempo sobrando, termina com 4 × 30/30
+      // com tempo sobrando, termina com 3 × 40/40
       const comAcabamento = disp >= 20 * 60 && nivel > 0;
-      const acabamento = comAcabamento ? 4 * 60 - 30 : 0;
+      const acabamento = comAcabamento ? 3 * 80 - 40 : 0;
       const continuo = disp - acabamento;
       const degraus = [0.55, 0.6, 0.65, 0.7, 0.75];
       const teto = [0.72, 0.82, 0.85][nivel];
@@ -636,9 +648,9 @@ export const PROTOCOLOS = {
         criarSegmento(pct >= 0.7 ? 'forte' : 'leve', f.kmh(pct), passo, INCLINACAO_BASE, `Degrau ${i + 1}/${degraus.length + 1}`));
       segs.push(f.forte(teto, passo, 'Final forte'));
       if (comAcabamento) {
-        segs.push(...repetir(4, (i) => [
-          ...(i === 0 ? [] : [f.leve(0.5, 30)]),
-          f.forte(0.9, 30, `Acabamento ${i + 1}/4`),
+        segs.push(...repetir(3, (i) => [
+          ...(i === 0 ? [] : [f.leve(0.5, 40)]),
+          f.forte(0.88, 40, `Acabamento ${i + 1}/3`),
         ]));
       }
       return segs;
@@ -646,27 +658,27 @@ export const PROTOCOLOS = {
   },
 
   emom: {
-    nome: 'EMOM',
-    curto: 'A cada minuto, tiro cada vez mais longo',
-    descricao: 'Every minute on the minute: começa com 20 s rápidos por minuto e termina com 40 s. A densidade sobe sem a velocidade mudar.',
-    fonte: 'Prática de treino funcional',
-    categoria: 'B', nivelMin: 1, minDur: 10, maxDur: 40, intenso: true,
+    nome: 'A cada 2 min',
+    curto: 'A cada 2 min, tiro cada vez mais longo',
+    descricao: 'Variação do EMOM: a cada 2 minutos um tiro que cresce de 40 s para 60 s e 80 s; o resto do intervalo é leve. A densidade sobe sem a velocidade mudar.',
+    fonte: 'Prática de treino funcional (EMOM)',
+    categoria: 'B', nivelMin: 1, minDur: 15, maxDur: 40, intenso: true,
     objetivos: { gordura: 2, condicionamento: 2, velocidade: 2, resistencia: 1 },
     montar({ disp, nivel, f }) {
-      const n = ate(Math.floor(disp / 60), 18);
-      if (n < 5) return null;
+      const n = ate(Math.floor(disp / 120), 10);
+      if (n < 4) return null;
       const pct = nivel === 2 ? 0.88 : 0.85;
       return repetir(n, (i) => {
         const terco = Math.min(2, Math.floor((i * 3) / n));
-        const rapido = [20, 30, 40][terco];
-        return [f.forte(pct, rapido, `Minuto ${i + 1}/${n}`), f.leve(0.5, 60 - rapido)];
+        const rapido = [40, 60, 80][terco];
+        return [f.forte(pct, rapido, `Tiro ${i + 1}/${n}`), f.leve(0.5, 120 - rapido)];
       });
     },
   },
 
   misto: {
     nome: 'Misto',
-    curto: '30/30 + over-under + rampas',
+    curto: '40/40 + over-under + rampas',
     descricao: 'Três estímulos diferentes na mesma sessão, com pausa entre eles: intermitente curto, limiar e força em subida.',
     fonte: 'Combinação dos protocolos acima',
     categoria: 'M', nivelMin: 1, minDur: 40, maxDur: 50, intenso: true,
@@ -674,14 +686,14 @@ export const PROTOCOLOS = {
     montar({ disp, f }) {
       const pausa = () => f.leve(0.5, 180, 'Troca de bloco');
       const segs = [
-        ...repetir(6, (i) => [f.forte(0.85, 30, `30/30 · ${i + 1}/6`), ...(i < 5 ? [f.leve(0.45, 30)] : [])]),
+        ...repetir(5, (i) => [f.forte(0.85, 40, `40/40 · ${i + 1}/5`), ...(i < 4 ? [f.leve(0.45, 40)] : [])]),
         pausa(),
         ...repetir(2, (i) => [
           criarSegmento('leve', f.kmh(0.69), 150, INCLINACAO_BASE, `Under ${i + 1}/2`),
           f.forte(0.8, 60, `Over ${i + 1}/2`),
         ]),
         pausa(),
-        ...repetir(6, (i) => [f.forte(0.7, 30, `Rampa ${i + 1}/6`, 8), ...(i < 5 ? [f.leve(0.45, 60)] : [])]),
+        ...repetir(5, (i) => [f.forte(0.7, 45, `Rampa ${i + 1}/5`, 8), ...(i < 4 ? [f.leve(0.45, 60)] : [])]),
       ];
       return duracaoTotal(segs) <= disp ? segs : null;
     },
@@ -737,7 +749,7 @@ function montarSessao(c, id) {
   const p = PROTOCOLOS[id];
   const V = c.ritmoMax;
   const nivel = NIVEIS.indexOf(c.nivel);
-  const f = fabrica(V);
+  const f = fabrica(V, nivel);
   const minAq = minutosAquecimento(c.duracao);
   const minVc = minutosDesaceleracao(c.duracao);
   const disp = (c.duracao - minAq - minVc) * 60;

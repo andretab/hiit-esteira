@@ -7,7 +7,7 @@ PWA instalável e offline-first que **gera e executa treinos HIIT de corrida na 
 
 - **16 protocolos de treino intervalado** tirados da literatura e adaptados à esteira (velocidade + inclinação). Veja a tabela abaixo.
 - **Escolha automática com rotação**: o app sorteia um protocolo compatível com objetivo, nível e duração. Ele evita repetir a mesma *categoria* de estímulo da sessão anterior e o mesmo protocolo na mesma semana; depois de sprints, prefere algo de limiar ou de subida. "Outra variação" sorteia de novo.
-- **Objetivo** (Variado, Gordura, Fôlego/VO2máx, Velocidade, Limiar) e **nível** (Iniciante, Intermediário, Avançado). Iniciante não recebe sprints nem Tabata e não passa de 90% do ritmo máximo.
+- **Objetivo** (Variado, Gordura, Fôlego/VO2máx, Velocidade, Limiar) e **nível** (Iniciante, Intermediário, Avançado). Iniciante não recebe sprints nem tiros 45/75 e não passa de 90% do ritmo máximo.
 - **Limites de segurança**: no máximo ~3 min por sessão acima de 95% do ritmo máximo. Sessões intensas ganham acelerações progressivas no aquecimento. Recuperações abaixo de 6,5 km/h viram caminhada.
 - **Unidades**: km/h (`14,0`) ou min/km em notação de corredor (`4'17"`), em toda a interface.
 - **Editor**: adiciona, remove, reordena e edita tipo, ritmo, duração e inclinação de cada segmento. Pode partir do treino gerado.
@@ -23,23 +23,23 @@ PWA instalável e offline-first que **gera e executa treinos HIIT de corrida na 
 | Protocolo | Estrutura (núcleo) | Categoria | Nível mín. | Fonte |
 |---|---|---|---|---|
 | 10×1 min | 1 min a 78–85% V / 1 min leve | intervalo curto | Iniciante | Little et al., J Physiol 2010 |
-| 30/30 | 30 s a 85–88% V / 30 s leve, em séries | intervalo curto | Intermediário | Billat et al., 2000 |
-| 10-20-30 | blocos de 5 × (30 s leve, 20 s médio, 10 s forte) | intervalo curto | Iniciante | Gunnarsson & Bangsbo, 2012 |
+| 40/40 | 40 s a 85–88% V / 40 s leve, em séries | intervalo curto | Intermediário | Billat et al., 2000 (adaptado) |
+| 60-40-40 | blocos de 3 × (60 s leve, 40 s médio, 40 s forte) | intervalo curto | Iniciante | adaptado de Gunnarsson & Bangsbo, 2012 |
 | 4×4 | 4 min a 72–80% V / 3 min leve (às vezes em subida a 6%) | intervalo longo | Iniciante | Helgerud et al., MSSE 2007 |
 | Pirâmide | 1-2-3-2-1 min, mais rápido quanto mais curto | intervalo longo | Iniciante | RunnersConnect |
 | Escada | 4-3-2-1 min de 74% a 92% V (ou crescente) | intervalo longo | Intermediário | Active.com |
 | Subidas longas | 90 s a 74% V e 4–6% / 2,5 min plano | subida | Iniciante | Runner's World, TrainingPeaks |
-| Rampas curtas | 30 s a 70% V e 8–10% / 90 s plano | subida | Intermediário | TrainingPeaks |
+| Rampas curtas | 45 s a 70% V e 8–10% / 90 s plano | subida | Intermediário | TrainingPeaks |
 | Caminhada inclinada | 90 s a 5,5–6 km/h e 8–12% / 90 s plano | subida | Iniciante | ACSM, ACE |
 | Fartlek | blocos de 1/1 min, cada bloco mais rápido | intervalo curto | Iniciante | Runkeeper |
 | Over-under | 2,5 min a 69% V + 1 min a 80% V, em blocos | limiar | Intermediário | TrainingPeaks |
-| Sprints 30 s | 4–6 × 30 s a 97% V / 3,5 min andando | sprint | Avançado | Gist et al., Sports Med 2014 |
-| Tabata | 8 × (20 s a 90–95% V / 40 s leve) | sprint | Intermediário | Tabata et al., MSSE 1996 |
+| Sprints 40 s | 3–4 × 40 s a 95% V / 3 min andando | sprint | Avançado | Gist et al., Sports Med 2014 (adaptado) |
+| 45/75 | 6–10 × (45 s a 90–92% V / 75 s leve) | sprint | Intermediário | Buchheit & Laursen, 2013 |
 | Progressivo | degraus contínuos de 55% a 75% V + final forte | limiar | Iniciante | Polar |
-| EMOM | a cada minuto, 20 → 30 → 40 s rápidos | intervalo curto | Intermediário | treino funcional |
-| Misto | 30/30 + over-under + rampas na mesma sessão | misto | Intermediário | combinação |
+| A cada 2 min | a cada 2 min, 40 → 60 → 80 s rápidos | intervalo curto | Intermediário | treino funcional (EMOM) |
+| Misto | 40/40 + over-under + rampas na mesma sessão | misto | Intermediário | combinação |
 
-Sobre as adaptações: a esteira leva de 5 a 15 s para trocar de velocidade. Por isso nenhum esforço tem menos de 10 s e o Tabata usa 40 s de pausa em vez de 10 s.
+Sobre as adaptações: a esteira leva de 5 a 15 s para trocar de velocidade. Por isso nenhum trecho gerado tem menos de 40 s (o Tabata, o 10-20-30 e o 30/30 originais foram alongados) e todas as velocidades geradas são km/h inteiros, fáceis de digitar no painel.
 A conversão "vVO2máx ≈ 80–85% de V" é uma aproximação a partir da literatura de reserva de velocidade anaeróbia. As constantes ficam todas em `generator.js`.
 
 > Treino de alta intensidade não é indicado sem liberação médica para quem tem condição cardíaca, hipertensão não controlada ou está voltando de lesão. Use sempre o clipe de segurança da esteira.
