@@ -9,16 +9,20 @@
 // desaquecimento também (trote leve + caminhada).
 //
 // Padrão do núcleo conforme o tempo disponível (V = ritmo máximo):
-//   núcleo <= 8 min  : 30 s a 95% V / 30 s recuperação  (tiros curtos)
+//   núcleo <= 8 min  : 40 s a 92% V / 40 s recuperação  (tiros curtos)
 //   núcleo <= 20 min : 60 s a 90% V / 60 s recuperação
 //   núcleo  > 20 min : 2 min a 85% V / 90 s recuperação  (intervalos longos)
 // A sobra que não fecha um ciclo completo é dividida entre aquecimento e desaquecimento.
+//
+// Regras de esteira (iguais ao PWA): velocidades em km/h INTEIROS (fáceis de digitar no
+// painel) e nenhum bloco com menos de 40 s (a esteira demora para trocar de velocidade).
 
 import Toybox.Lang;
+import Toybox.Math;
 
 module Gerador {
 
-    const CAMINHADA = 5.5;          // km/h
+    const CAMINHADA = 5.0;          // km/h
     const CAMINHADA_FINAL = 5.0;    // km/h
     const RITMO_MINIMO = 4.0;       // piso de qualquer bloco
     const RECUPERACAO_MIN = 6.0;    // abaixo de ~6,5 km/h ninguém trota: vira caminhada rápida
@@ -40,11 +44,12 @@ module Gerador {
         return 5;
     }
 
-    // Percentual de V, arredondado a 0,1 e limitado a [RITMO_MINIMO, V].
+    // Percentual de V em km/h inteiro, limitado a [RITMO_MINIMO, V arredondado para baixo].
     function pctV(v as Float, pct as Float) as Float {
-        var r = Unidades.arred1(v * pct);
+        var r = Math.round(v * pct).toFloat();
+        var teto = Math.floor(v + 0.001).toFloat();
         if (r < RITMO_MINIMO) { return RITMO_MINIMO; }
-        if (r > v) { return v; }
+        if (r > teto) { return teto; }
         return r;
     }
 
@@ -55,9 +60,9 @@ module Gerador {
         var disp = (duracaoMin - minAq - minVc) * 60;  // segundos para o núcleo
 
         // Escolhe o padrão do núcleo.
-        var esfSeg = 30;
-        var recSeg = 30;
-        var pctEsf = 0.95;
+        var esfSeg = 40;
+        var recSeg = 40;
+        var pctEsf = 0.92;
         if (disp <= 480) {
             // tiros curtos (valores iniciais acima)
         } else if (disp <= 1200) {

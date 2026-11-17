@@ -76,13 +76,16 @@ export function lerRitmo(texto, unidade) {
   return Number.isFinite(kmh) ? arred1(kmh) : NaN;
 }
 
-// Valor do ritmo (sem unidade) na notação de corredor: "12,6" (km/h) ou 4'17" (min/km).
+// Valor do ritmo (sem unidade) na notação de corredor: "12" / "12,6" (km/h) ou 4'17" (min/km).
+// Em km/h a casa decimal só aparece quando existe (o gerador usa inteiros).
 export function valorRitmo(kmh, unidade) {
   if (unidade === 'pace') {
     const p = formatarPace(kmhParaPace(kmh));
     return p.includes('-') ? '--' : `${p.replace(':', "'")}"`;
   }
-  return Number.isFinite(kmh) ? arred1(kmh).toFixed(1).replace('.', ',') : '--';
+  if (!Number.isFinite(kmh)) return '--';
+  const v = arred1(kmh);
+  return Number.isInteger(v) ? String(v) : v.toFixed(1).replace('.', ',');
 }
 
 export function rotuloUnidade(unidade) {

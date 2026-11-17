@@ -117,15 +117,16 @@ O `Application.Storage` fica reservado para dados (histórico).
 
 | Duração (min) | Núcleo                              |
 |---------------|-------------------------------------|
-| 10–17         | 30 s a 95% V / 30 s recuperação     |
+| 10–17         | 40 s a 92% V / 40 s recuperação     |
 | 18–33         | 60 s a 90% V / 60 s recuperação     |
 | 34–50         | 2 min a 85% V / 90 s recuperação    |
 
 (O padrão é escolhido pelo tempo que sobra para o núcleo depois de aquecimento e
 desaquecimento. A conta fecha exatamente em todas as durações de 10 a 50 min.)
 
-Aquecimento: 1 min caminhando a 5,5 km/h + trote a 58% V. Desaquecimento: trote a 50% V +
-1 min a 5,0 km/h. A recuperação é 50% V, com piso de 6,0 km/h.
+Aquecimento: 1 min caminhando a 5 km/h + trote a 58% V. Desaquecimento: trote a 50% V +
+1 min a 5 km/h. A recuperação é 50% V, com piso de 6 km/h. Todas as velocidades geradas são
+km/h inteiros e nenhum bloco tem menos de 40 s (mais prático de ajustar na esteira).
 
 ## Como rodar no simulador (Windows)
 

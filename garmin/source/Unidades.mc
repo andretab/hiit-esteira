@@ -28,7 +28,8 @@ module Unidades {
         return Math.round(3600.0 / kmh).toNumber();
     }
 
-    // Só o valor, sem unidade: "14.0" / "14,0" ou "4:17".
+    // Só o valor, sem unidade: "14", "14.3" / "14,3" ou "4:17".
+    // Valores inteiros saem sem casa decimal (o gerador usa km/h inteiros).
     function valorRitmo(kmh as Float, unidade as Unidade, separador as String) as String {
         if (unidade == UNIDADE_PACE) {
             var s = kmhParaSegPorKm(kmh);
@@ -38,6 +39,9 @@ module Unidades {
             return (s / 60).toString() + ":" + (s % 60).format("%02d");
         }
         var d = Math.round(kmh * 10.0).toNumber();
+        if (d % 10 == 0) {
+            return (d / 10).toString();
+        }
         return (d / 10).toString() + separador + (d % 10).toString();
     }
 

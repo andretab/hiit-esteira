@@ -57,8 +57,8 @@ teste('lerPace aceita 4:17, 4\'17", 4.17 (m.ss) e decimal', () => {
   verdade(Number.isNaN(lerPace('abc')), 'texto deve ser inválido');
 });
 
-teste('exibição em notação de corredor: 14,0 e 4\'17"', () => {
-  igual(valorRitmo(14, 'kmh'), '14,0');
+teste('exibição em notação de corredor: 14 e 4\'17"', () => {
+  igual(valorRitmo(14, 'kmh'), '14');   // inteiro sem casa decimal
   igual(valorRitmo(12.6, 'kmh'), '12,6');
   igual(valorRitmo(14, 'pace'), '4\'17"');
   igual(lerRitmo('12,5', 'kmh'), 12.5);

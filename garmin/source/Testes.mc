@@ -135,3 +135,24 @@ function testeIdaEVoltaStorage(logger as Test.Logger) as Boolean {
     Test.assertEqual(c.itens.size(), 1);
     return true;
 }
+
+// Treino gerado: km/h inteiros, nenhum bloco abaixo de 40 s e duração exata (10 a 50 min).
+(:test)
+function testeGeradorRegrasDeEsteira(logger as Test.Logger) as Boolean {
+    var maximos = [14.0, 13.7, 10.5] as Array<Float>;
+    for (var m = 0; m < maximos.size(); m++) {
+        for (var dur = 10; dur <= 50; dur += 5) {
+            var t = Gerador.gerar(maximos[m], dur);
+            Test.assertEqual(t.duracaoTotal(), dur * 60);
+            for (var i = 0; i < t.intervalos.size(); i++) {
+                var b = t.intervalos[i];
+                Test.assertMessage(b.kmh == b.kmh.toNumber().toFloat(), "ritmo não inteiro: " + b.kmh);
+                Test.assertMessage(b.kmh <= maximos[m], "acima do máximo: " + b.kmh);
+                Test.assertMessage(b.duracaoSeg >= 40, dur + " min: bloco de " + b.duracaoSeg + " s");
+            }
+        }
+    }
+    Test.assertEqual(Unidades.valorRitmo(14.0, Unidades.UNIDADE_KMH, ","), "14");
+    Test.assertEqual(Unidades.valorRitmo(13.5, Unidades.UNIDADE_KMH, ","), "13,5");
+    return true;
+}
